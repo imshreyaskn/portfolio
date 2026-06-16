@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/png" href="/favicon.png" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    
+    <title>Shreyas</title>
+    <meta name="description" content="Building resilient architectures across LLM pipelines, distributed networks, and modern web infrastructure." />
+    <meta property="og:title" content="Shreyas" />
+    <meta property="og:description" content="Software engineer specializing in LLM pipelines, distributed systems, and modern web." />
+    <meta property="og:image" content="/hero-figure.webp" />
+    <meta property="og:type" content="website" />
+    <meta name="twitter:card" content="summary_large_image" />
+
+    <!-- Preconnect to font origins -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+    <!--
+      Non-blocking font load: single combined request.
+      The media="print" + onload trick avoids render-blocking while still
+      loading the stylesheet asynchronously. <noscript> is the fallback.
+    -->
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Italiana&family=JetBrains+Mono:wght@400;500&family=Jost:wght@200;300;400;500&display=swap"
+      media="print"
+      onload="this.media='all'"
+    >
+    <noscript>
+      <link
+        rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Italiana&family=JetBrains+Mono:wght@400;500&family=Jost:wght@200;300;400;500&display=swap"
+      >
+    </noscript>
+
+    <!-- Preload the LCP hero image so it fetches alongside JS, not after -->
+    <link rel="preload" as="image" href="/hero-figure.webp" fetchpriority="high">
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

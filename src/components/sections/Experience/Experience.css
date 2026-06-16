@@ -1,0 +1,353 @@
+.experience-wrapper {
+  position: relative;
+  width: 100%;
+  height: 400vh; /* Increased height significantly slows down the scroll animation speed */
+  z-index: 10;
+  scroll-snap-align: start;
+}
+
+.experience-section {
+  width: 100%;
+  height: 100vh;
+  position: sticky;
+  top: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background-color: transparent;
+}
+
+.spaceship {
+  position: absolute;
+  left: 50%;
+  margin-left: -14px;
+  top: 50%;
+  margin-top: -20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 20;
+}
+
+.moon-images-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10vh;
+}
+
+.moon-image {
+  height: 10vh;
+  width: auto;
+  max-width: 80vw;
+  object-fit: contain;
+  transition: transform 0.8s cubic-bezier(0.16, 1, 0.3, 1), filter 0.8s ease;
+}
+
+.moon-image:hover {
+  transform: scale(1.05);
+}
+
+.experience-label {
+  position: absolute;
+  top: 50%;
+  font-family: 'Jost', sans-serif;
+  font-size: 1.5rem;
+  font-weight: 300;
+  text-transform: uppercase;
+  color: var(--text-primary);
+  white-space: nowrap;
+  pointer-events: none;
+  text-shadow: 0 0 20px rgba(255, 255, 255, 0.3);
+  letter-spacing: 0.2em;
+}
+
+.experience-label.right {
+  left: calc(100% + clamp(32px, 4vw, 80px));
+}
+
+.experience-label.left {
+  right: calc(100% + clamp(32px, 4vw, 80px));
+}
+
+.experience-panel {
+  position: absolute;
+  top: 50%;
+  width: clamp(320px, 38vw, 620px);
+  min-width: 320px;
+  max-width: 620px;
+  height: max-content;
+  min-height: 580px;
+  background: rgba(0, 0, 0, 0.15);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  z-index: 100;
+  padding: 60px 40px;
+  display: flex;
+  flex-direction: column;
+  color: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+}
+
+.experience-panel.panel-left {
+  left: 5vw;
+}
+
+.experience-panel.panel-right {
+  right: 5vw;
+}
+
+@property --panel-angle {
+  syntax: '<angle>';
+  initial-value: 45deg;
+  inherits: false;
+}
+
+.experience-panel::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  padding: 1.5px;
+  --panel-angle: 45deg;
+  background: linear-gradient(
+    var(--panel-angle),
+    rgba(255, 255, 255, 0.9) 0%,
+    rgba(255, 255, 255, 0.05) 30%,
+    rgba(255, 255, 255, 0.05) 70%,
+    rgba(255, 255, 255, 0.9) 100%
+  );
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+  transition: --panel-angle 1.2s cubic-bezier(0.16, 1, 0.3, 1) 0.3s;
+}
+
+.experience-panel.active::before {
+  --panel-angle: 225deg;
+}
+
+.panel-floating-header {
+  position: absolute;
+  bottom: calc(100% + 24px);
+  left: 0;
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  width: 100%;
+}
+
+.panel-close-btn {
+  background: transparent;
+  border: none;
+  color: white;
+  padding: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  opacity: 0.7;
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.panel-close-btn:hover {
+  opacity: 1;
+  transform: translateX(-5px);
+}
+
+.panel-floating-title {
+  font-family: 'Jost', sans-serif;
+  text-transform: uppercase;
+  font-size: clamp(1rem, 1.5vw, 1.5rem);
+  font-weight: 300;
+  letter-spacing: 0.1em;
+  margin: 0;
+  text-shadow: 0 0 20px rgba(255, 255, 255, 0.3);
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.panel-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 24px;
+}
+
+.panel-role {
+  font-family: 'Jost', sans-serif;
+  font-size: 1.4rem;
+  font-weight: 300;
+  letter-spacing: 0.05em;
+  color: rgba(255, 255, 255, 0.95);
+}
+
+.panel-role.silver-glow-text {
+  color: transparent;
+}
+
+.panel-company-duration {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-family: 'Inter', sans-serif;
+  font-size: 0.95rem;
+  font-weight: 300;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+
+.panel-duration {
+  opacity: 0.8;
+}
+
+.panel-divider {
+  width: 100%;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.15) 0%,
+    rgba(255, 255, 255, 0.02) 100%
+  );
+  margin-bottom: 32px;
+}
+
+.panel-bullets {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.panel-bullets li {
+  position: relative;
+  padding-left: 24px;
+  font-family: 'Inter', sans-serif;
+  font-weight: 300;
+  font-size: 1.05rem;
+  line-height: 1.6;
+  color: rgba(255, 255, 255, 0.65);
+}
+
+.panel-bullets li::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 10px;
+  width: 5px;
+  height: 5px;
+  background-color: rgba(255, 255, 255, 0.9);
+  border-radius: 50%;
+  box-shadow: 0 0 8px rgba(255, 255, 255, 0.6);
+  opacity: 0.8;
+}
+
+.glow-full {
+  filter: drop-shadow(0 0 15px rgba(255, 255, 255, 0.25));
+}
+.glow-full:hover {
+  filter: drop-shadow(0 0 30px rgba(255, 255, 255, 0.45));
+}
+
+.glow-bottom {
+  filter: drop-shadow(0 15px 20px rgba(255, 255, 255, 0.25));
+}
+.glow-bottom:hover {
+  filter: drop-shadow(0 25px 35px rgba(255, 255, 255, 0.45));
+}
+
+.glow-bottom-right {
+  filter: drop-shadow(12px 12px 20px rgba(255, 255, 255, 0.25));
+}
+.glow-bottom-right:hover {
+  filter: drop-shadow(20px 20px 35px rgba(255, 255, 255, 0.45));
+}
+
+@media (max-width: 1023px) {
+  .panel-floating-header {
+    position: relative;
+    bottom: auto;
+    left: auto;
+    width: 100%;
+    margin-bottom: 1.5rem;
+  }
+}
+
+/* ─── MOBILE ─────────────────────────────────────────────────────────────── */
+@media (max-width: 767px) {
+  /* Prevent horizontal bleed when panels slide in/out */
+  .experience-section {
+    overflow: hidden;
+  }
+
+  /* Smaller moon images */
+  .moon-image {
+    height: 8vh;
+    min-height: 48px;
+  }
+
+  .moon-images-container {
+    gap: 7vh;
+  }
+
+  /* Labels: centred below each moon instead of floating left/right */
+  .experience-label {
+    top: auto;
+    bottom: -2rem;
+    font-size: 0.7rem;
+    letter-spacing: 0.1em;
+  }
+
+  .experience-label.right,
+  .experience-label.left {
+    left: 50%;
+    right: auto;
+    transform: translateX(-50%);
+  }
+
+  /* Panel — starts below the OrbNavbar zone, with side margins */
+  .experience-panel {
+    position: absolute;
+    top: 130px !important;
+    left: 15px !important;
+    right: 15px !important;
+    width: calc(100% - 30px) !important;
+    min-width: unset;
+    max-width: unset;
+    height: calc(100% - 145px);
+    min-height: unset;
+    overflow-y: auto;
+    padding: 1.5rem 1.5rem 2.5rem;
+    border-radius: 0;
+    
+    /* Inherit the original background and blur instead of opaque dark card */
+    background: rgba(0, 0, 0, 0.15);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+  }
+
+  /* Keep the ::before border matching the card */
+  .experience-panel::before {
+    border-radius: 0;
+  }
+
+  /* Header moves from "floating above the panel" to "inside at the top" */
+  .panel-floating-header {
+    padding-top: 2rem;
+  }
+
+  .panel-floating-title {
+    font-size: 1rem;
+  }
+
+  .panel-role {
+    font-size: 1.05rem;
+  }
+
+  .panel-bullets li {
+    font-size: 0.9rem;
+  }
+}
