@@ -6,7 +6,7 @@ import ParticleSphere from './ParticleSphere';
 import { useIsMobile } from '../../../hooks/useIsMobile';
 import './Skills.css';
 
-const ConstellationGraph = ({ skills }: { skills: SkillItem[] }) => {
+const ConstellationGraph = ({ skills, isMobile }: { skills: SkillItem[]; isMobile: boolean }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const pathsRef = useRef<(SVGPathElement | null)[]>([]);
   const chipsRef = useRef<(HTMLDivElement | null)[]>([]);
@@ -63,7 +63,17 @@ const ConstellationGraph = ({ skills }: { skills: SkillItem[] }) => {
   }, [skills, edges]);
 
   return (
-    <div className="skills-graph-container" style={{ position: 'relative', width: '100%', height: 'clamp(250px, 40vh, 400px)', marginTop: '1.5rem' }} ref={containerRef}>
+    <div
+      className="skills-graph-container"
+      style={{
+        position: 'relative',
+        width: '100%',
+        height: isMobile ? 'clamp(160px, 28vh, 220px)' : 'clamp(250px, 40vh, 400px)',
+        marginTop: isMobile ? '0.5rem' : '1.5rem',
+        overflow: 'visible',
+      }}
+      ref={containerRef}
+    >
       <svg viewBox="0 0 100 100" preserveAspectRatio="none" style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', zIndex: 0, pointerEvents: 'none', overflow: 'visible' }}>
         {edges.map((_, idx) => (
           <path 
@@ -205,7 +215,7 @@ const Skills = () => {
                     )}
                   </div>
 
-                  <ConstellationGraph skills={SKILLS_DATA[selectedIndex].skills} />
+                  <ConstellationGraph skills={SKILLS_DATA[selectedIndex].skills} isMobile={isMobile} />
                 </div>
               </motion.div>
             </AnimatePresence>
@@ -219,7 +229,7 @@ const Skills = () => {
         transition={{ type: 'spring', damping: 25, stiffness: 120 }}
         className="skills-canvas-wrapper"
       >
-        <View className="skills-canvas-view" ref={viewRef}>
+        <View className="skills-canvas-view" ref={viewRef} style={{ touchAction: isMobile ? 'pan-y' : 'none' }}>
           <PerspectiveCamera makeDefault position={[0, 0, 5.5]} fov={45} />
           {/* OrbitControls disabled on mobile to prevent scroll conflicts */}
           {selectedIndex === null && !isMobile && (

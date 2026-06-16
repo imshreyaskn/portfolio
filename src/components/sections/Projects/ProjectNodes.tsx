@@ -1,7 +1,8 @@
-import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { useId } from 'react';
 import { useIsMobile } from '../../../hooks/useIsMobile';
+
+// ─── Planet SVG shapes ────────────────────────────────────────────────────────
 
 const PlanetGasGiant = () => {
   const clipId = useId();
@@ -70,70 +71,138 @@ const PlanetCratered = () => {
   );
 };
 
+// ─── Props ────────────────────────────────────────────────────────────────────
+
 interface ProjectNodesProps {
   setHoveredPlanet: (p: string | null) => void;
   onTapPlanet: (name: string) => void;
 }
 
+// ─── Shared hit-area wrapper ──────────────────────────────────────────────────
+// The visual SVG is centered inside a transparent container that is always at
+// least 48×48 px so touch targets meet Apple HIG & Google Material minimums.
+
+interface PlanetHitAreaProps {
+  children: React.ReactNode;
+  visualSize: string;
+  posStyle: React.CSSProperties;
+  name: string;
+  isMobile: boolean;
+  setHoveredPlanet: (p: string | null) => void;
+  onTapPlanet: (name: string) => void;
+  href: string;
+  hoverAnim?: object;
+  tapAnim?: object;
+}
+
+const PlanetHitArea = ({
+  children,
+  visualSize,
+  posStyle,
+  name,
+  isMobile,
+  setHoveredPlanet,
+  onTapPlanet,
+  href,
+  hoverAnim,
+  tapAnim,
+}: PlanetHitAreaProps) => {
+  const HIT_PX = 48;
+
+  const handleClick = () => {
+    if (isMobile) {
+      onTapPlanet(name);
+    } else {
+      window.open(href, '_blank', 'noopener,noreferrer');
+    }
+  };
+
+  return (
+    <motion.div
+      onHoverStart={() => !isMobile && setHoveredPlanet(name)}
+      onHoverEnd={() => !isMobile && setHoveredPlanet(null)}
+      whileHover={!isMobile ? hoverAnim : undefined}
+      whileTap={tapAnim}
+      onClick={handleClick}
+      style={{
+        pointerEvents: 'auto',
+        position: 'absolute',
+        // Transparent hit area — at least 48 px on all sides
+        width: `max(${visualSize}, ${HIT_PX}px)`,
+        height: `max(${visualSize}, ${HIT_PX}px)`,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        cursor: 'pointer',
+        // Eliminate 300 ms tap delay; don't block page scroll
+        touchAction: 'manipulation',
+        zIndex: 10,
+        ...posStyle,
+      }}
+    >
+      {/* Visual planet — exact size, centered in the hit area */}
+      <div style={{ width: visualSize, height: visualSize, flexShrink: 0 }}>
+        {children}
+      </div>
+    </motion.div>
+  );
+};
+
+// ─── Main component ───────────────────────────────────────────────────────────
+
 const ProjectNodes = ({ setHoveredPlanet, onTapPlanet }: ProjectNodesProps) => {
   const isMobile = useIsMobile();
 
-  const hoverProps = (name: string) => isMobile
-    ? {}  // No hover on mobile — use onTap instead
-    : {
-        onHoverStart: () => setHoveredPlanet(name),
-        onHoverEnd:   () => setHoveredPlanet(null),
-      };
+  // Visual sizes — clamp ensures ≥ 28 px visible on any phone
+  // (old: 2.5 vh ≈ 16 px on a 667 px phone; old large: 4.8 vh ≈ 32 px)
+  const sm = 'clamp(28px, 3.5vh, 42px)';
+  const lg = 'clamp(44px, 6vh, 62px)';
 
   return (
     <>
-      {/* 1. Gas Giant: "Lucy" */}
-      <motion.div
-        {...hoverProps('Lucy')}
-        whileHover={{ scale: 1.15, rotate: 5 }}
-        whileTap={{ scale: 0.95 }}
-        onTap={() => isMobile && onTapPlanet('Lucy')}
-        onClick={() => window.open('https://github.com/imshreyaskn/Lucy', '_blank', 'noopener,noreferrer')}
-        style={{ pointerEvents: 'auto', position: 'absolute', top: '20%', left: '0%', x: '-50%', y: '-50%', width: '2.5vh', height: '2.5vh', zIndex: 10, cursor: 'pointer' }}
+      {/* 1. Gas Giant — Lucy */}
+      <PlanetHitArea
+        name="Lucy" visualSize={sm} isMobile={isMobile}
+        setHoveredPlanet={setHoveredPlanet} onTapPlanet={onTapPlanet}
+        href="https://github.com/imshreyaskn/Lucy"
+        hoverAnim={{ scale: 1.15, rotate: 5 }} tapAnim={{ scale: 0.95 }}
+        posStyle={{ top: '20%', left: '0%', x: '-50%', y: '-50%' } as React.CSSProperties}
       >
         <PlanetGasGiant />
-      </motion.div>
+      </PlanetHitArea>
 
-      {/* 2. Cratered: "Alethia" */}
-      <motion.div
-        {...hoverProps('Alethia')}
-        whileHover={{ scale: 1.15, rotate: 5 }}
-        whileTap={{ scale: 0.95 }}
-        onTap={() => isMobile && onTapPlanet('Alethia')}
-        onClick={() => window.open('https://github.com/imshreyaskn/Alethia', '_blank', 'noopener,noreferrer')}
-        style={{ pointerEvents: 'auto', position: 'absolute', top: '30%', left: '67%', x: '-50%', y: '-50%', width: '2.5vh', height: '2.5vh', zIndex: 10, cursor: 'pointer' }}
+      {/* 2. Cratered — Alethia */}
+      <PlanetHitArea
+        name="Alethia" visualSize={sm} isMobile={isMobile}
+        setHoveredPlanet={setHoveredPlanet} onTapPlanet={onTapPlanet}
+        href="https://github.com/imshreyaskn/Alethia"
+        hoverAnim={{ scale: 1.15, rotate: 5 }} tapAnim={{ scale: 0.95 }}
+        posStyle={{ top: '30%', left: '67%', x: '-50%', y: '-50%' } as React.CSSProperties}
       >
         <PlanetCratered />
-      </motion.div>
+      </PlanetHitArea>
 
-      {/* 3. Ringed: "Valerie" */}
-      <motion.div
-        {...hoverProps('Valerie')}
-        whileHover={{ scale: 1.15, rotate: -5 }}
-        whileTap={{ scale: 0.95 }}
-        onTap={() => isMobile && onTapPlanet('Valerie')}
-        onClick={() => window.open('https://github.com/imshreyaskn/Valerie', '_blank', 'noopener,noreferrer')}
-        style={{ pointerEvents: 'auto', position: 'absolute', top: '50%', left: '33%', x: '-50%', y: '-50%', width: '4.8vh', height: '4.8vh', zIndex: 10, cursor: 'pointer' }}
+      {/* 3. Ringed — Valerie (largest, already comfortably tappable) */}
+      <PlanetHitArea
+        name="Valerie" visualSize={lg} isMobile={isMobile}
+        setHoveredPlanet={setHoveredPlanet} onTapPlanet={onTapPlanet}
+        href="https://github.com/imshreyaskn/Valerie"
+        hoverAnim={{ scale: 1.15, rotate: -5 }} tapAnim={{ scale: 0.95 }}
+        posStyle={{ top: '50%', left: '33%', x: '-50%', y: '-50%' } as React.CSSProperties}
       >
         <PlanetRinged />
-      </motion.div>
+      </PlanetHitArea>
 
-      {/* 4. Earth-like: "Relay" */}
-      <motion.div
-        {...hoverProps('Relay')}
-        whileHover={{ scale: 1.15, rotate: -5 }}
-        whileTap={{ scale: 0.95 }}
-        onTap={() => isMobile && onTapPlanet('Relay')}
-        onClick={() => window.open('https://github.com/imshreyaskn/Relay', '_blank', 'noopener,noreferrer')}
-        style={{ pointerEvents: 'auto', position: 'absolute', top: '60%', left: '100%', x: '-50%', y: '-50%', width: '2.5vh', height: '2.5vh', zIndex: 10, cursor: 'pointer' }}
+      {/* 4. Earth-like — Relay */}
+      <PlanetHitArea
+        name="Relay" visualSize={sm} isMobile={isMobile}
+        setHoveredPlanet={setHoveredPlanet} onTapPlanet={onTapPlanet}
+        href="https://github.com/imshreyaskn/Relay"
+        hoverAnim={{ scale: 1.15, rotate: -5 }} tapAnim={{ scale: 0.95 }}
+        posStyle={{ top: '60%', left: '100%', x: '-50%', y: '-50%' } as React.CSSProperties}
       >
         <PlanetEarthLike />
-      </motion.div>
+      </PlanetHitArea>
     </>
   );
 };

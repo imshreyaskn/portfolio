@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { View, PerspectiveCamera } from '@react-three/drei';
+import { useIsMobile } from '../../../hooks/useIsMobile';
 import Saturn from './Saturn';
 import ProjectNodes from './ProjectNodes';
 import { generateParticles } from './data';
@@ -9,6 +10,7 @@ import './Projects.css';
 const Projects = () => {
   const [hoveredPlanet, setHoveredPlanet] = useState<string | null>(null);
   const particles = useMemo(() => generateParticles(), []);
+  const isMobile = useIsMobile();
 
   // Toggle for mobile tap — tapping the same planet again dismisses the label
   const handlePlanetTap = (name: string) => {
@@ -60,13 +62,17 @@ const Projects = () => {
         />
       </div>
 
-      {/* Planet label HUD — left on desktop, bottom-center on mobile (via CSS) */}
+      {/* Planet label HUD
+          Desktop: slides in from the left at vertical center
+          Mobile:  simple fade in at bottom-center (CSS positions it, we only animate opacity) */}
       <AnimatePresence>
         {hoveredPlanet && (
           <motion.div
-            initial={{ opacity: 0, x: -20, y: '-50%' }}
-            animate={{ opacity: 1, x: 0,   y: '-50%' }}
-            exit={{    opacity: 0, x: -20, y: '-50%' }}
+            key={hoveredPlanet}
+            initial={isMobile ? { opacity: 0 } : { opacity: 0, x: -20, y: '-50%' }}
+            animate={isMobile ? { opacity: 1 } : { opacity: 1, x: 0,   y: '-50%' }}
+            exit={isMobile   ? { opacity: 0 } : { opacity: 0, x: -20, y: '-50%' }}
+            transition={{ duration: 0.25 }}
             className="projects-hover-label"
           >
             {hoveredPlanet}

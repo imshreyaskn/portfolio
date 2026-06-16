@@ -4,11 +4,15 @@
   left: 0%;
   width: 100px;
   height: 100px;
+  /* Shift inward by safe-area so it clears the notch / Dynamic Island */
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-left: env(safe-area-inset-left, 0px);
   z-index: 50;
   display: flex;
   align-items: center;
   justify-content: center;
-  cursor: pointer;
+  /* Eliminate 300ms tap delay */
+  touch-action: manipulation;
   pointer-events: auto;
 }
 
@@ -100,11 +104,13 @@
 
 @media (max-width: 767px) {
   .orb-navbar-container {
+    /* Larger container on mobile for easier interaction */
     width: 130px;
     height: 130px;
   }
 
   .orb-hit-area {
+    /* 56×56px touch target meets Apple / Google HIG minimums */
     width: 56px;
     height: 56px;
     top: -28px;
@@ -112,6 +118,6 @@
   }
 
   .orb-active-section-label {
-    top: 20px;
+    top: calc(20px + env(safe-area-inset-top, 0px));
   }
 }

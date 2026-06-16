@@ -1,9 +1,11 @@
 .footer-section {
   position: relative;
   z-index: 10;
-  background: #000000; /* Pure black background */
+  background: #000000;
   padding: 1.5rem 2rem;
-  margin-top: 15vh; /* Spaced down from Saturn */
+  /* Extra bottom padding so links clear the home indicator on iPhone */
+  padding-bottom: calc(1.5rem + env(safe-area-inset-bottom, 0px));
+  margin-top: 15vh;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -57,10 +59,14 @@
   font-size: 1rem;
   letter-spacing: 0.15em;
   text-decoration: none;
-  color: #C0C0C0; /* Solid shiny silver */
+  color: #C0C0C0;
   opacity: 0.85;
   transition: all 0.3s ease;
   cursor: pointer;
+  /* Minimum 44px tap height without affecting layout */
+  padding: 10px 4px;
+  display: inline-flex;
+  align-items: center;
 }
 
 .footer-text-link:hover {
@@ -69,14 +75,25 @@
 }
 
 @media (max-width: 767px) {
+  .footer-section {
+    padding: 1.25rem 1.5rem;
+    padding-bottom: calc(1.25rem + env(safe-area-inset-bottom, 0px));
+  }
+
   .footer-content {
     flex-direction: column;
-    gap: 2.5rem;
+    gap: 1.5rem;
     text-align: center;
   }
   
   .footer-links {
+    gap: 1.5rem;
     flex-wrap: wrap;
     justify-content: center;
+  }
+
+  .footer-text-link {
+    font-size: 0.9rem;
+    letter-spacing: 0.1em;
   }
 }

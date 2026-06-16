@@ -386,10 +386,10 @@ const ParticleSphere = memo(({ count = 300, radius = 0.5, onSelect, portalRef }:
   return (
     <group>
       <mesh 
-        onPointerMove={handlePointerMove}
-        onPointerOut={handlePointerOut}
-        onPointerDown={handlePointerDown}
-        onPointerUp={handlePointerUp}
+        onPointerMove={isMobile ? undefined : handlePointerMove}
+        onPointerOut={isMobile ? undefined : handlePointerOut}
+        onPointerDown={isMobile ? undefined : handlePointerDown}
+        onPointerUp={isMobile ? undefined : handlePointerUp}
       >
         <sphereGeometry args={[radius, 16, 16]} />
         <meshBasicMaterial visible={false} />

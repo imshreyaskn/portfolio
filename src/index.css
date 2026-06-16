@@ -92,7 +92,17 @@
   box-sizing: border-box;
   margin: 0;
   padding: 0;
-  cursor: none !important;
+}
+
+/* Custom cursor — only on pointer-fine (mouse) devices, never on touch */
+@media (pointer: fine) {
+  * { cursor: none !important; }
+  body { cursor: none; }
+}
+
+/* Eliminate 300ms tap delay on all interactive elements */
+a, button, [role="button"], input, select, textarea, label {
+  touch-action: manipulation;
 }
 
 html { 
@@ -154,8 +164,7 @@ h3       { font-size: var(--fs-h3); letter-spacing: -0.01em; line-height: 1.25; 
 
 
 @media (max-width: 767px) {
-  .container { padding: 0 24px; grid-template-columns: repeat(4, 1fr); gap: 16px; }
-  * { cursor: auto !important; }
+  .container { padding: 0 20px; grid-template-columns: repeat(4, 1fr); gap: 16px; }
 }
 
 .text-accent { color: var(--accent); }

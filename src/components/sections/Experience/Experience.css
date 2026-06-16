@@ -8,7 +8,7 @@
 
 .experience-section {
   width: 100%;
-  height: 100vh;
+  height: 100dvh;
   position: sticky;
   top: 0;
   display: flex;
@@ -292,12 +292,13 @@
     gap: 7vh;
   }
 
-  /* Labels: centred below each moon instead of floating left/right */
+  /* Labels: centred below each moon, ensure they don't clip into siblings */
   .experience-label {
     top: auto;
-    bottom: -2rem;
-    font-size: 0.7rem;
-    letter-spacing: 0.1em;
+    bottom: -2.2rem;
+    font-size: 0.68rem;
+    letter-spacing: 0.08em;
+    white-space: nowrap;
   }
 
   .experience-label.right,
@@ -307,47 +308,75 @@
     transform: translateX(-50%);
   }
 
-  /* Panel — starts below the OrbNavbar zone, with side margins */
+  /* Panel — starts below safe area + orb zone, with side margins */
   .experience-panel {
     position: absolute;
-    top: 130px !important;
+    top: calc(env(safe-area-inset-top, 0px) + 100px) !important;
     left: 15px !important;
     right: 15px !important;
     width: calc(100% - 30px) !important;
     min-width: unset;
     max-width: unset;
-    height: calc(100% - 145px);
+    /* Use dvh so panel height is correct even with address bar */
+    height: calc(100dvh - env(safe-area-inset-top, 0px) - 115px);
     min-height: unset;
     overflow-y: auto;
-    padding: 1.5rem 1.5rem 2.5rem;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+    padding: 1.25rem 1.25rem 2.5rem;
     border-radius: 0;
-    
-    /* Inherit the original background and blur instead of opaque dark card */
     background: rgba(0, 0, 0, 0.15);
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
     box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
   }
 
-  /* Keep the ::before border matching the card */
   .experience-panel::before {
     border-radius: 0;
   }
 
-  /* Header moves from "floating above the panel" to "inside at the top" */
   .panel-floating-header {
-    padding-top: 2rem;
+    padding-top: 1.5rem;
+    margin-bottom: 1rem;
   }
 
   .panel-floating-title {
-    font-size: 1rem;
+    font-size: 0.95rem;
   }
 
   .panel-role {
-    font-size: 1.05rem;
+    font-size: 1rem;
   }
 
   .panel-bullets li {
-    font-size: 0.9rem;
+    font-size: 0.88rem;
+    padding-left: 20px;
+    gap: 16px;
+  }
+
+  /* Back / close button — larger tap area on mobile */
+  .panel-close-btn {
+    padding: 12px;
+    touch-action: manipulation;
+  }
+}
+
+/* Very short phones (landscape / SE) */
+@media (max-width: 767px) and (max-height: 700px) {
+  .experience-panel {
+    padding: 0.75rem 1rem 2rem;
+  }
+
+  .panel-meta {
+    margin-bottom: 16px;
+  }
+
+  .panel-bullets {
+    gap: 14px;
+  }
+
+  .panel-bullets li {
+    font-size: 0.82rem;
+    line-height: 1.5;
   }
 }
