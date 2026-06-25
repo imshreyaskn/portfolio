@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'react';
+import { useEffect } from 'react';
 import { motion, useAnimation } from 'framer-motion';
 import './LoadingScreen.css';
 
@@ -10,23 +10,22 @@ const LoadingScreen = ({ onComplete }: LoadingScreenProps) => {
   const controls = useAnimation();
 
   useEffect(() => {
-    // Lock body scroll so users can't scroll while loading
     document.body.style.overflow = 'hidden';
     document.documentElement.style.overflow = 'hidden';
 
     const runAnimation = async () => {
-      // 1. Fade in stars
-      await controls.start('starsVisible');
-      // 2. Draw lines sequentially
-      await controls.start('linesDrawn');
-      // 3. Short pause to admire
-      await new Promise(resolve => setTimeout(resolve, 300));
-      // 4. Gather stars in the center while fading lines
-      await controls.start('gatherCenter');
-      // 5. Trigger unmount directly (no jumpy pulse)
+      // 1. Initial spin and build up
+      await controls.start('visible');
+      
+      // 2. Short pause to admire the black hole
+      await new Promise(resolve => setTimeout(resolve, 800));
+      
+      // 3. Implosion effect
+      await controls.start('implode');
+      
+      // 4. Trigger unmount
       onComplete();
       
-      // Unlock body scroll
       document.body.style.overflow = '';
       document.documentElement.style.overflow = '';
     };
@@ -39,104 +38,95 @@ const LoadingScreen = ({ onComplete }: LoadingScreenProps) => {
     };
   }, [controls, onComplete]);
 
-  // Diamond shape points with gather offsets
-  const points = [
-    { cx: 50, cy: 20, gatherX: 0, gatherY: 30 },   // Top
-    { cx: 80, cy: 50, gatherX: -30, gatherY: 0 },  // Right
-    { cx: 50, cy: 80, gatherX: 0, gatherY: -30 },  // Bottom
-    { cx: 20, cy: 50, gatherX: 30, gatherY: 0 },   // Left
-  ];
-
-  // Path lines connecting them
-  const lines = [
-    { x1: points[0].cx, y1: points[0].cy, x2: points[1].cx, y2: points[1].cy }, // Top -> Right
-    { x1: points[1].cx, y1: points[1].cy, x2: points[2].cx, y2: points[2].cy }, // Right -> Bottom
-    { x1: points[2].cx, y1: points[2].cy, x2: points[3].cx, y2: points[3].cy }, // Bottom -> Left
-    { x1: points[3].cx, y1: points[3].cy, x2: points[0].cx, y2: points[0].cy }, // Left -> Top
-    { x1: points[0].cx, y1: points[0].cy, x2: points[2].cx, y2: points[2].cy }, // Top -> Bottom (Cross)
-    { x1: points[3].cx, y1: points[3].cy, x2: points[1].cx, y2: points[1].cy }, // Left -> Right (Cross)
-  ];
-
   return (
     <motion.div 
       className="loading-screen-overlay"
-      initial={{ 
-        opacity: 1,
-        background: 'radial-gradient(circle at 50% 50%, rgba(0,0,0,1) 0%, rgba(0,0,0,1) 100%)'
-      }}
-      exit={{ 
-        opacity: 0, 
-        background: 'radial-gradient(circle at 50% 50%, rgba(0,0,0,0) 30%, rgba(0,0,0,1) 100%)',
-        transition: { duration: 1.5, ease: "easeInOut" } 
-      }}
+      initial={{ opacity: 1 }}
+      exit={{ opacity: 0, transition: { duration: 1.2, ease: "easeInOut" } }}
     >
-      <svg 
-        viewBox="0 0 100 100" 
-        className="constellation-svg"
-        preserveAspectRatio="xMidYMid meet"
-      >
-        <defs>
-          <linearGradient id="silverLineGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="#ffffff" />
-            <stop offset="50%" stopColor="#A8A8B3" />
-            <stop offset="100%" stopColor="#ffffff" />
-          </linearGradient>
-        </defs>
+      <div className="black-hole-container">
+        
+        {/* Outer Ring */}
+        <motion.div 
+          className="accretion-disk-outer"
+          initial={{ scale: 0, opacity: 0, rotateX: 70, rotateZ: 0 }}
+          animate={controls}
+          variants={{
+            visible: { 
+              scale: 1, opacity: 1, rotateZ: 360, 
+              transition: { 
+                scale: { duration: 1.5, ease: "easeOut" },
+                opacity: { duration: 1.5 },
+                rotateZ: { duration: 10, ease: "linear", repeat: Infinity } 
+              } 
+            },
+            implode: { scale: 0, opacity: 0, transition: { duration: 0.8, ease: "backIn" } }
+          }}
+        />
 
-        {lines.map((line, i) => (
-          <motion.line
-            key={`line-${i}`}
-            x1={line.x1}
-            y1={line.y1}
-            x2={line.x2}
-            y2={line.y2}
-            stroke="url(#silverLineGrad)"
-            strokeWidth="0.15"
-            strokeLinecap="round"
-            initial={{ pathLength: 0, opacity: 0 }}
-            animate={controls}
-            variants={{
-              linesDrawn: { 
-                pathLength: 1, 
-                opacity: 0.6,
-                transition: { duration: 0.5, delay: i * 0.35, ease: "easeInOut" } 
-              },
-              gatherCenter: {
-                opacity: 0,
-                transition: { duration: 0.4, ease: "easeOut" }
-              }
-            }}
-          />
-        ))}
+        {/* Main Disk */}
+        <motion.div 
+          className="accretion-disk"
+          initial={{ scale: 0.2, opacity: 0, rotateX: 65, rotateZ: 0 }}
+          animate={controls}
+          variants={{
+            visible: { 
+              scale: 1, opacity: 1, rotateZ: 360, 
+              transition: { 
+                scale: { duration: 1.2, ease: "easeOut", delay: 0.2 },
+                opacity: { duration: 1.2, delay: 0.2 },
+                rotateZ: { duration: 3, ease: "linear", repeat: Infinity } 
+              } 
+            },
+            implode: { scale: 0, opacity: 0, rotateZ: 720, transition: { duration: 0.8, ease: "backIn" } }
+          }}
+        />
 
-        {points.map((pt, i) => (
-          <motion.g
-            key={`star-${i}`}
-            style={{ originX: `${pt.cx}px`, originY: `${pt.cy}px` }}
-            initial={{ x: 0, y: 0, scale: 1, opacity: 0 }}
-            animate={controls}
-            variants={{
-              starsVisible: { 
-                opacity: 1, 
-                transition: { duration: 0.8, delay: i * 0.2, ease: "easeInOut" } 
-              },
-              gatherCenter: {
-                x: pt.gatherX,
-                y: pt.gatherY,
-                opacity: 0, /* smoothly fade out as they gather */
-                transition: { duration: 0.8, ease: "backIn" }
-              }
-            }}
-          >
-            {/* Diffuse outer glow */}
-            <circle cx={pt.cx} cy={pt.cy} r="2.5" fill="rgba(255, 255, 255, 0.2)" filter="blur(1.5px)" />
-            {/* Mid intense glow */}
-            <circle cx={pt.cx} cy={pt.cy} r="1" fill="rgba(255, 255, 255, 0.5)" filter="blur(0.5px)" />
-            {/* Sharp, tiny core */}
-            <circle cx={pt.cx} cy={pt.cy} r="0.3" fill="#ffffff" />
-          </motion.g>
-        ))}
-      </svg>
+        {/* Inner Disk */}
+        <motion.div 
+          className="accretion-disk-inner"
+          initial={{ scale: 0, opacity: 0, rotateX: 60, rotateZ: 0 }}
+          animate={controls}
+          variants={{
+            visible: { 
+              scale: 1, opacity: 1, rotateZ: -360, 
+              transition: { 
+                scale: { duration: 1, ease: "easeOut", delay: 0.4 },
+                opacity: { duration: 1, delay: 0.4 },
+                rotateZ: { duration: 2, ease: "linear", repeat: Infinity } 
+              } 
+            },
+            implode: { scale: 0, opacity: 0, rotateZ: -720, transition: { duration: 0.6, ease: "backIn" } }
+          }}
+        />
+
+        {/* Black Hole Event Horizon */}
+        <motion.div 
+          className="event-horizon"
+          initial={{ scale: 0 }}
+          animate={controls}
+          variants={{
+            visible: { scale: 1, transition: { duration: 1.8, ease: [0.16, 1, 0.3, 1] } },
+            implode: { scale: 0, transition: { duration: 0.6, ease: "easeIn", delay: 0.2 } }
+          }}
+        />
+
+        {/* Pulsing Text */}
+        <motion.div 
+          className="loading-text"
+          initial={{ opacity: 0 }}
+          animate={controls}
+          variants={{
+            visible: { 
+              opacity: [0.3, 0.8, 0.3], 
+              transition: { opacity: { duration: 2, repeat: Infinity, ease: "easeInOut" } } 
+            },
+            implode: { opacity: 0, transition: { duration: 0.3 } }
+          }}
+        >
+          establishing orbit
+        </motion.div>
+      </div>
     </motion.div>
   );
 };
