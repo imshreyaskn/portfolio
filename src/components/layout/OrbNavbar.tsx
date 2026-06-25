@@ -268,9 +268,9 @@ const OrbNavbar = () => {
       <AnimatePresence>
         {activeSection && activeSection !== 'home' && activeSection !== 'footer' && !isHovered && (
           <motion.div
-            initial={{ opacity: 0, x: "-50%", y: -10 }}
-            animate={{ opacity: 1, x: "-50%", y: 0 }}
-            exit={{ opacity: 0, x: "-50%", y: -10 }}
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
             transition={{ duration: 0.3 }}
             className="orb-active-section-label"
           >

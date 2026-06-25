@@ -1,6 +1,5 @@
 .hero-section {
   height: 100dvh;
-  min-height: -webkit-fill-available; /* iOS 15 Safari fallback */
   display: flex;
   align-items: center;
   position: relative;
@@ -100,7 +99,7 @@
 
 @media (max-width: 1023px) {
   .hero-content {
-    grid-column: 1 / 7;
+    grid-column: 1 / 6;
   }
   .hero-image-wrapper {
     width: 35vw;

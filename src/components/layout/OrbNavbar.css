@@ -89,7 +89,9 @@
 
 .orb-active-section-label {
   position: fixed;
-  left: 50vw;
+  left: 0;
+  width: 100%;
+  text-align: center;
   top: 30px;
   color: var(--text-primary);
   font-family: 'Italiana', 'Italiana-fallback', serif;

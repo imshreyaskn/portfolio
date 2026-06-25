@@ -36,7 +36,7 @@
   position: absolute;
   top: 0;
   width: 1px;
-  background: linear-gradient(to bottom, rgba(255, 255, 255, 0.7), transparent);
+  background: linear-gradient(to bottom, var(--line-visible), transparent);
   transform: translateX(-50%); /* Perfect center alignment */
 }
 
@@ -88,12 +88,24 @@
 
 .projects-overlay-container {
   position: absolute;
-  top: 28dvh; /* Perfectly aligns with Saturn's 3D optical equator across all aspect ratios */
+  top: 27.5dvh; /* Perfectly aligns with Saturn's 3D optical equator */
   left: 50vw; /* Using vw guarantees perfect alignment with WebGL canvas center, ignoring DOM scrollbars */
   transform: translateX(-50%);
   width: 8.5vh; /* Dynamically tracks Saturn core width, providing enough spacing so lines are distinct */
   height: 75dvh;
   pointer-events: none;
+}
+
+@media (min-aspect-ratio: 2/1) {
+  .projects-overlay-container {
+    top: 32dvh;
+  }
+}
+
+@media (max-aspect-ratio: 3/4) {
+  .projects-overlay-container {
+    top: 24dvh;
+  }
 }
 
 .projects-threads-overlay {
