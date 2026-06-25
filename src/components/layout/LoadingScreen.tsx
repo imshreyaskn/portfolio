@@ -14,11 +14,11 @@ const LoadingScreen = ({ onComplete }: LoadingScreenProps) => {
     document.documentElement.style.overflow = 'hidden';
 
     const runAnimation = async () => {
-      // 1. Initial spin and build up
-      await controls.start('visible');
+      // 1. Initial spin and build up (Don't await, because rotateZ loops infinitely)
+      controls.start('visible');
       
-      // 2. Short pause to admire the black hole
-      await new Promise(resolve => setTimeout(resolve, 800));
+      // 2. Wait for the initial animations to finish (longest is 1.8s) + a short pause (800ms)
+      await new Promise(resolve => setTimeout(resolve, 2600));
       
       // 3. Implosion effect
       await controls.start('implode');
