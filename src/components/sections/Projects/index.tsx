@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { View, PerspectiveCamera } from '@react-three/drei';
+import { View, PerspectiveCamera, Html } from '@react-three/drei';
 import { useIsMobile } from '../../../hooks/useIsMobile';
 import Saturn from './Saturn';
 import ProjectNodes from './ProjectNodes';
