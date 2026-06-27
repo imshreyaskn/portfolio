@@ -29,7 +29,7 @@
   background: #000;
   border-radius: 50%;
   /* Glow behind the black hole, creating an eclipse effect */
-  box-shadow: 0 0 40px 15px rgba(255, 255, 255, 0.8), 0 0 80px 30px rgba(255, 240, 150, 0.3);
+  box-shadow: 0 0 40px 15px rgba(255, 255, 255, 0.8), 0 0 80px 30px rgba(255, 240, 150, 0.15);
   z-index: 10;
 }
 
