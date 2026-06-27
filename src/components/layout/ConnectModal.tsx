@@ -8,17 +8,22 @@ interface ConnectModalProps {
 }
 
 const ConnectModal: React.FC<ConnectModalProps> = ({ isOpen, onClose }) => {
-  const [subject, setSubject] = useState('');
+  const [name, setName] = useState('');
+  const [fromEmail, setFromEmail] = useState('');
   const [body, setBody] = useState('');
 
+  const getFormattedBody = () => {
+    return `Name: ${name}\nEmail: ${fromEmail}\n\nMessage:\n${body}`;
+  };
+
   const handleSendMailApp = () => {
-    const mailtoLink = `mailto:imshreyaskn@gmail.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+    const mailtoLink = `mailto:imshreyaskn@gmail.com?subject=Portfolio Inquiry&body=${encodeURIComponent(getFormattedBody())}`;
     window.location.href = mailtoLink;
     onClose();
   };
 
   const handleSendGmail = () => {
-    const gmailLink = `https://mail.google.com/mail/?view=cm&fs=1&to=imshreyaskn@gmail.com&su=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+    const gmailLink = `https://mail.google.com/mail/?view=cm&fs=1&to=imshreyaskn@gmail.com&su=Portfolio Inquiry&body=${encodeURIComponent(getFormattedBody())}`;
     window.open(gmailLink, '_blank');
     onClose();
   };
@@ -58,13 +63,24 @@ const ConnectModal: React.FC<ConnectModalProps> = ({ isOpen, onClose }) => {
             </div>
 
             <div className="connect-form-group">
-              <label>Subject</label>
+              <label>Name</label>
               <input 
                 type="text" 
                 className="connect-input" 
-                placeholder="What's this about?"
-                value={subject}
-                onChange={(e) => setSubject(e.target.value)}
+                placeholder="John Doe"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+              />
+            </div>
+
+            <div className="connect-form-group">
+              <label>From</label>
+              <input 
+                type="email" 
+                className="connect-input" 
+                placeholder="john@example.com"
+                value={fromEmail}
+                onChange={(e) => setFromEmail(e.target.value)}
               />
             </div>
 
