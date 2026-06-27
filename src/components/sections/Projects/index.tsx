@@ -47,7 +47,7 @@ const Projects = () => {
               style={{
                 left: p.left,
                 top: p.top,
-                animation: `${p.direction === 1 ? 'swarmDown' : 'swarmUp'} ${p.speed} linear ${p.animDelay} infinite, wobble ${p.wobbleSpeed} ease-in-out ${p.wobbleDelay} infinite`
+                animation: `${p.direction === 1 ? 'swarmDown' : 'swarmUp'} ${p.speed} linear ${p.animDelay} infinite`
               }}
             />
           ))}

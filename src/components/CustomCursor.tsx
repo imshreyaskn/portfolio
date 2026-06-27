@@ -40,9 +40,9 @@ const CustomCursor = () => {
       }
     };
 
-    window.addEventListener('mousemove', handleMouseMove);
-    document.addEventListener('mouseover', handleMouseOver);
-    document.addEventListener('mouseout', handleMouseOut);
+    window.addEventListener('mousemove', handleMouseMove, { passive: true });
+    document.addEventListener('mouseover', handleMouseOver, { passive: true });
+    document.addEventListener('mouseout', handleMouseOut, { passive: true });
 
     let frameId: number;
 
@@ -86,12 +86,21 @@ const CustomCursor = () => {
         const finalScaleY = currentScaleY * currentHoverScale;
         
         const size = 35; // base size
-        const transform = hovering 
-          ? `translate3d(${currentX - size/2}px, ${currentY - size/2}px, 0) rotate(0deg) scale(${currentHoverScale}, ${currentHoverScale})`
-          : `translate3d(${currentX - size/2}px, ${currentY - size/2}px, 0) rotate(${currentAngle}deg) scale(${finalScaleX}, ${finalScaleY})`;
         
-        cursorRef.current.style.transform = transform;
-        cursorRef.current.classList.toggle('hovering', hovering);
+        const isSettled = velocity < 0.01 && 
+                          Math.abs(currentHoverScale - targetHoverScale) < 0.001 && 
+                          Math.abs(currentScaleX - targetScaleX) < 0.001;
+
+        if (!isSettled || hovering !== cursorRef.current.classList.contains('hovering')) {
+          const transform = hovering 
+            ? `translate3d(${currentX - size/2}px, ${currentY - size/2}px, 0) rotate(0deg) scale(${currentHoverScale}, ${currentHoverScale})`
+            : `translate3d(${currentX - size/2}px, ${currentY - size/2}px, 0) rotate(${currentAngle}deg) scale(${finalScaleX}, ${finalScaleY})`;
+          
+          cursorRef.current.style.transform = transform;
+          if (hovering !== cursorRef.current.classList.contains('hovering')) {
+            cursorRef.current.classList.toggle('hovering', hovering);
+          }
+        }
       }
 
       frameId = requestAnimationFrame(animate);

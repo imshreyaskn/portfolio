@@ -27,6 +27,7 @@
   align-items: center;
   justify-content: center;
   z-index: 20;
+  will-change: transform, filter;
 }
 
 .moon-images-container {
@@ -87,6 +88,8 @@
   flex-direction: column;
   color: rgba(255, 255, 255, 0.9);
   box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+  contain: layout style;
+  will-change: transform;
 }
 
 .experience-panel.panel-left {

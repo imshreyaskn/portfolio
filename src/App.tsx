@@ -72,7 +72,7 @@ function App() {
         <Canvas
           eventSource={rootElement}
           gl={{ antialias: false, powerPreference: 'high-performance' }}
-          dpr={[1, 2]}
+          dpr={[1, 1.5]}
           className="global-canvas"
           style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', pointerEvents: 'none', zIndex: 5 }}
         >

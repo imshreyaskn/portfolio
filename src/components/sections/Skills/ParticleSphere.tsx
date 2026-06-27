@@ -249,8 +249,9 @@ const ParticleSphere = memo(({ count = 300, radius = 0.5, onSelect, portalRef }:
           if (distSq < blastRadius * blastRadius && distSq > 0.0001) {
             const dist = Math.sqrt(distSq);
             const force = (blastRadius - dist) / blastRadius; 
+            const scalar = (force * maxRepulsion) / dist;
             
-            tempVec.subVectors(particleBase, closestPoint).normalize().multiplyScalar(force * maxRepulsion);
+            tempVec.subVectors(particleBase, closestPoint).multiplyScalar(scalar);
             
             targetX += tempVec.x;
             targetY += tempVec.y;

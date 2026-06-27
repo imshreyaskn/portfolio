@@ -107,9 +107,9 @@ const Saturn = () => {
   });
 
   const ringData = [
-    { inner: 1.20, outer: 1.90, count: 1200, opacity: 0.55, size: 0.016 },
-    { inner: 2.10, outer: 2.70, count:  700, opacity: 0.25, size: 0.014 },
-    { inner: 2.90, outer: 3.30, count:  900, opacity: 0.70, size: 0.018 },
+    { inner: 1.20, outer: 1.90, count: 800, opacity: 0.55, size: 0.016 },
+    { inner: 2.10, outer: 2.70, count: 450, opacity: 0.25, size: 0.014 },
+    { inner: 2.90, outer: 3.30, count: 600, opacity: 0.70, size: 0.018 },
   ];
 
   return (
@@ -128,7 +128,7 @@ const Saturn = () => {
 
       {/* Sweeping-gradient outline — mirrors the MoonSVG animated border */}
       <mesh>
-        <sphereGeometry args={[0.875, 64, 64]} />
+        <sphereGeometry args={[0.875, 32, 32]} />
         <shaderMaterial
           ref={outlineMatRef}
           side={BackSide}

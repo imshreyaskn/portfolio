@@ -57,20 +57,28 @@ const OrbNavbar = () => {
 
     const observedElements = new Set<Element>();
     
-    // Polling interval to catch lazy-loaded sections
+    let interval: NodeJS.Timeout;
     const checkAndObserve = () => {
       const sectionIds = ['home', 'skills', 'experience', 'projects', 'footer'];
+      let allFound = true;
       sectionIds.forEach(id => {
         const el = document.getElementById(id);
-        if (el && !observedElements.has(el)) {
-          observer.observe(el);
-          observedElements.add(el);
+        if (el) {
+          if (!observedElements.has(el)) {
+            observer.observe(el);
+            observedElements.add(el);
+          }
+        } else {
+          allFound = false;
         }
       });
+      if (allFound) {
+        clearInterval(interval);
+      }
     };
     
     checkAndObserve();
-    const interval = setInterval(checkAndObserve, 1000);
+    interval = setInterval(checkAndObserve, 1000);
 
     return () => {
       clearInterval(interval);
@@ -97,6 +105,9 @@ const OrbNavbar = () => {
   const timeRef = useRef(0);
   const targetRotation = useRef({ x: 0, y: 0 });
   const currentRotation = useRef({ x: 0, y: 0 });
+  const lastTransforms = useRef<string[]>([]);
+  const lastOpacities = useRef<string[]>([]);
+  const lastZIndexes = useRef<string[]>([]);
 
   const R = 10;
   const FL = 250;
@@ -149,9 +160,22 @@ const OrbNavbar = () => {
         const currentOpacity = opacity3D + (1 - opacity3D) * t;
 
         if (orbRefs.current[i]) {
-          orbRefs.current[i]!.style.transform = `translate(-50%, -50%) translate3d(${currentX}px, ${currentY}px, 0) scale(${currentScale})`;
-          orbRefs.current[i]!.style.opacity = currentOpacity.toString();
-          orbRefs.current[i]!.style.zIndex = Math.round(currentScale * 100).toString();
+          const newTransform = `translate(-50%, -50%) translate3d(${currentX.toFixed(2)}px, ${currentY.toFixed(2)}px, 0) scale(${currentScale.toFixed(2)})`;
+          const newOpacity = currentOpacity.toFixed(2);
+          const newZIndex = Math.round(currentScale * 100).toString();
+
+          if (lastTransforms.current[i] !== newTransform) {
+            orbRefs.current[i]!.style.transform = newTransform;
+            lastTransforms.current[i] = newTransform;
+          }
+          if (lastOpacities.current[i] !== newOpacity) {
+            orbRefs.current[i]!.style.opacity = newOpacity;
+            lastOpacities.current[i] = newOpacity;
+          }
+          if (lastZIndexes.current[i] !== newZIndex) {
+            orbRefs.current[i]!.style.zIndex = newZIndex;
+            lastZIndexes.current[i] = newZIndex;
+          }
         }
 
         return { x: currentX, y: currentY };

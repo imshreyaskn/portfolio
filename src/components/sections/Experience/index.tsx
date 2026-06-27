@@ -90,10 +90,9 @@ const Experience = () => {
 
   const smoothProgress = useSpring(scrollYProgress, { stiffness: 100, damping: 30, restDelta: 0.001 });
   const scrollVelocity = useVelocity(smoothProgress);
-  const smoothVelocity = useSpring(scrollVelocity, { stiffness: 50, damping: 20, restDelta: 0.001 });
 
   const spaceshipFilter = useTransform(
-    smoothVelocity,
+    scrollVelocity,
     [-0.5, 0, 0.5],
     [
       'drop-shadow(0 0 50px rgba(255,255,255,0.95)) drop-shadow(0 0 25px rgba(255,255,255,0.8)) drop-shadow(0 0 8px rgba(255,255,255,0.6))',

@@ -54,10 +54,7 @@
   100% { transform: translateY(150px); opacity: 0; }
 }
 
-@keyframes wobble {
-  0%, 100% { margin-left: -12px; } /* Drift outside the lines */
-  50% { margin-left: 12px; }
-}
+
 
 .thread-particle {
   position: absolute;
