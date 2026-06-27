@@ -65,6 +65,7 @@ const ConnectModal: React.FC<ConnectModalProps> = ({ isOpen, onClose }) => {
           access_key: accessKey,
           name: name,
           email: fromEmail,
+          from_name: "Portfolio Contact Form",
           message: body,
           subject: "Portfolio Inquiry from " + name,
         }),
