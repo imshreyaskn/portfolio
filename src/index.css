@@ -235,6 +235,8 @@ h3       { font-size: var(--fs-h3); letter-spacing: -0.01em; line-height: 1.25; 
 .framer-button {
   position: relative;
   background: rgba(0, 0, 0, 0.4); /* Semi-black transparent */
+  border: none;
+  outline: none;
   border-radius: 0px; /* Razor sharp corners */
   padding: 10px 24px; /* Smaller footprint */
   color: #FFFFFF;
