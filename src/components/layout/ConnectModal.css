@@ -95,6 +95,7 @@
 .connect-textarea {
   min-height: 120px;
   resize: vertical;
+  overscroll-behavior: contain;
 }
 
 .connect-actions {

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import './ConnectModal.css';
 
@@ -11,6 +11,21 @@ const ConnectModal: React.FC<ConnectModalProps> = ({ isOpen, onClose }) => {
   const [name, setName] = useState('');
   const [fromEmail, setFromEmail] = useState('');
   const [body, setBody] = useState('');
+
+  useEffect(() => {
+    if (!isOpen) return;
+
+    // Close the modal when the window scrolls
+    const handleScroll = () => {
+      onClose();
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+    };
+  }, [isOpen, onClose]);
 
   const getFormattedBody = () => {
     return `Name: ${name}\nEmail: ${fromEmail}\n\nMessage:\n${body}`;
