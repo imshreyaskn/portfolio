@@ -22,12 +22,6 @@ const ConnectModal: React.FC<ConnectModalProps> = ({ isOpen, onClose }) => {
     onClose();
   };
 
-  const handleSendGmail = () => {
-    const gmailLink = `https://mail.google.com/mail/?view=cm&fs=1&to=imshreyaskn@gmail.com&su=Portfolio Inquiry&body=${encodeURIComponent(getFormattedBody())}`;
-    window.open(gmailLink, '_blank');
-    onClose();
-  };
-
   return (
     <AnimatePresence>
       {isOpen && (
@@ -95,11 +89,8 @@ const ConnectModal: React.FC<ConnectModalProps> = ({ isOpen, onClose }) => {
             </div>
 
             <div className="connect-actions">
-              <button className="connect-btn" onClick={handleSendMailApp}>
-                Mail App
-              </button>
-              <button className="connect-btn connect-btn-primary" onClick={handleSendGmail}>
-                Gmail Web
+              <button className="connect-btn connect-btn-primary" onClick={handleSendMailApp}>
+                Send
               </button>
             </div>
           </motion.div>
