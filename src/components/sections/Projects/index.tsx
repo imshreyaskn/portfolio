@@ -25,8 +25,8 @@ const Projects = () => {
           <PerspectiveCamera makeDefault position={[0, 0, 8]} fov={45} />
           <group position={[0, 1.5, 0]}>
             <Saturn />
-            <Html center position={[0, -0.15, 0]} zIndexRange={[10, 20]}>
-              <div style={{ width: '100vw', height: '100vh', pointerEvents: 'none', display: 'flex', justifyContent: 'center' }}>
+            <Html center position={[0, -0.05, 0]} zIndexRange={[10, 20]}>
+              <div style={{ position: 'relative', width: 0, height: 0, pointerEvents: 'none' }}>
                 {/* 2D Hanging Threads Overlay */}
                 <div className="projects-overlay-container projects-threads-overlay">
                   <div className="hanging-thread" style={{ left: '0%',  height: '70%' }} />

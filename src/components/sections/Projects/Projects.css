@@ -85,23 +85,23 @@
 
 .projects-overlay-container {
   position: absolute;
-  top: 27.5dvh; /* Perfectly aligns with Saturn's 3D optical equator */
-  left: 50vw; /* Using vw guarantees perfect alignment with WebGL canvas center, ignoring DOM scrollbars */
+  top: 0; /* Positioned relative to the 0x0 Html wrapper centered at Saturn */
+  left: 0;
   transform: translateX(-50%);
-  width: clamp(20px, 4.5vh, 40px); /* Dynamically tracks Saturn core width, providing enough spacing so lines are distinct */
+  width: clamp(20px, 4.5vh, 40px);
   height: 75dvh;
   pointer-events: none;
 }
 
 @media (min-aspect-ratio: 2/1) {
   .projects-overlay-container {
-    top: 32dvh;
+    top: 0;
   }
 }
 
 @media (max-aspect-ratio: 3/4) {
   .projects-overlay-container {
-    top: 24dvh;
+    top: 0;
   }
 }
 
