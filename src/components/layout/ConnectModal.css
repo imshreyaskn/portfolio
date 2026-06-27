@@ -1,0 +1,142 @@
+.connect-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+}
+
+.connect-modal {
+  width: 100%;
+  max-width: 480px;
+  background: rgba(10, 10, 15, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 2.5rem;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5), inset 0 0 20px rgba(255, 255, 255, 0.05);
+  position: relative;
+  box-sizing: border-box;
+}
+
+.connect-modal-close {
+  position: absolute;
+  top: 1.5rem;
+  right: 1.5rem;
+  background: transparent;
+  border: none;
+  color: rgba(255, 255, 255, 0.5);
+  cursor: pointer;
+  font-size: 2rem;
+  line-height: 1;
+  transition: color 0.3s ease;
+}
+
+.connect-modal-close:hover {
+  color: #fff;
+}
+
+.connect-modal-title {
+  font-family: 'Italiana', 'Italiana-fallback', serif;
+  font-size: 2.5rem;
+  color: #fff;
+  margin-bottom: 2rem;
+  margin-top: 0;
+}
+
+.connect-form-group {
+  margin-bottom: 1.25rem;
+  display: flex;
+  flex-direction: column;
+}
+
+.connect-form-group label {
+  font-family: 'Jost', sans-serif;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: rgba(255, 255, 255, 0.5);
+  margin-bottom: 0.5rem;
+}
+
+.connect-input, .connect-textarea {
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 6px;
+  padding: 0.75rem 1rem;
+  color: #fff;
+  font-family: 'Jost', sans-serif;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.connect-input:focus, .connect-textarea:focus {
+  outline: none;
+  border-color: rgba(255, 255, 255, 0.4);
+  background: rgba(0, 0, 0, 0.5);
+  box-shadow: 0 0 15px rgba(255, 255, 255, 0.05);
+}
+
+.connect-input:disabled {
+  color: rgba(255, 255, 255, 0.4);
+  cursor: not-allowed;
+}
+
+.connect-textarea {
+  min-height: 120px;
+  resize: vertical;
+}
+
+.connect-actions {
+  display: flex;
+  gap: 1rem;
+  margin-top: 2rem;
+}
+
+.connect-btn {
+  flex: 1;
+  padding: 0.8rem;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: rgba(255, 255, 255, 0.8);
+  border-radius: 6px;
+  font-family: 'Jost', sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.connect-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.3);
+  color: #fff;
+}
+
+.connect-btn-primary {
+  background: rgba(255, 255, 255, 0.9);
+  border: none;
+  color: #000;
+  font-weight: 500;
+}
+
+.connect-btn-primary:hover {
+  background: #fff;
+  box-shadow: 0 0 20px rgba(255, 255, 255, 0.4);
+}
+
+@media (max-width: 600px) {
+  .connect-actions {
+    flex-direction: column;
+  }
+}
