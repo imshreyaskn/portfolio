@@ -296,7 +296,7 @@ const OrbNavbar = () => {
                 {activeSection === 'home' && "Hover top right orb to navigate"}
                 {activeSection === 'skills' && "Drag and spin the particle sphere to explore"}
                 {activeSection === 'experience' && "Scroll to explore timeline"}
-                {(activeSection === 'projects' || activeSection === 'footer') && "Scroll to orbit Saturn and click planets to explore projects"}
+                {(activeSection === 'projects' || activeSection === 'footer') && "Drag to orbit Saturn and click planets to explore projects"}
               </span>
             </motion.div>
           )}
