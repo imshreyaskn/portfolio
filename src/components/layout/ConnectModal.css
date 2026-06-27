@@ -12,7 +12,9 @@
 .connect-modal {
   width: 100%;
   max-width: 560px;
-  background: rgba(10, 10, 15, 0.9); /* Heavy black tint */
+  background: rgba(10, 10, 15, 0.4);
+  backdrop-filter: blur(40px);
+  -webkit-backdrop-filter: blur(40px);
   border: 1px solid rgba(255, 255, 255, 0.15);
   border-radius: 0px;
   padding: 2.5rem;
