@@ -39,7 +39,7 @@ const Footer = () => {
           </motion.a>
 
           <motion.a 
-            href="/resume.pdf" 
+            href="https://drive.google.com/file/d/1xkwCVuQZmElNuCnR7d3vqgr9eqzklVi2/view?usp=sharing" 
             target="_blank" 
             rel="noopener noreferrer"
             className="footer-text-link"
