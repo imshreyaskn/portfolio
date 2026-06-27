@@ -88,8 +88,7 @@
   max-width: 620px;
   height: max-content;
   max-height: 80vh;
-  overflow-y: auto;
-  overscroll-behavior: contain;
+  /* overflow removed so absolute floating header isn't clipped */
   background: rgba(0, 0, 0, 0.65);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
@@ -103,20 +102,31 @@
   will-change: transform;
 }
 
-/* Custom scrollbar for panel */
-.experience-panel::-webkit-scrollbar {
+/* Custom scrollbar for panels */
+.experience-panel::-webkit-scrollbar,
+.panel-content::-webkit-scrollbar {
   width: 6px;
 }
-.experience-panel::-webkit-scrollbar-track {
+.experience-panel::-webkit-scrollbar-track,
+.panel-content::-webkit-scrollbar-track {
   background: rgba(255, 255, 255, 0.05);
   border-radius: 4px;
 }
-.experience-panel::-webkit-scrollbar-thumb {
+.experience-panel::-webkit-scrollbar-thumb,
+.panel-content::-webkit-scrollbar-thumb {
   background: rgba(255, 255, 255, 0.2);
   border-radius: 4px;
 }
-.experience-panel::-webkit-scrollbar-thumb:hover {
+.experience-panel::-webkit-scrollbar-thumb:hover,
+.panel-content::-webkit-scrollbar-thumb:hover {
   background: rgba(255, 255, 255, 0.3);
+}
+
+.panel-content {
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  min-height: 0;
+  padding-right: 8px; /* buffer for scrollbar */
 }
 
 .experience-panel.panel-left {
@@ -158,13 +168,13 @@
 }
 
 .panel-floating-header {
-  position: absolute;
-  bottom: calc(100% + 24px);
-  left: 0;
+  position: relative;
   display: flex;
   align-items: center;
   gap: 24px;
   width: 100%;
+  margin-bottom: 24px;
+  flex-shrink: 0;
 }
 
 .panel-close-btn {
@@ -294,15 +304,7 @@
   filter: drop-shadow(20px 20px 35px rgba(255, 255, 255, 0.45));
 }
 
-@media (max-width: 1023px) {
-  .panel-floating-header {
-    position: relative;
-    bottom: auto;
-    left: auto;
-    width: 100%;
-    margin-bottom: 1.5rem;
-  }
-}
+
 
 /* ─── MOBILE ─────────────────────────────────────────────────────────────── */
 @media (max-width: 767px) {
