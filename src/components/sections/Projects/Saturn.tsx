@@ -107,9 +107,9 @@ const Saturn = () => {
   });
 
   const ringData = [
-    { inner: 1.20, outer: 1.90, count: 800, opacity: 0.55, size: 0.016 },
-    { inner: 2.10, outer: 2.70, count: 450, opacity: 0.25, size: 0.014 },
-    { inner: 2.90, outer: 3.30, count: 600, opacity: 0.70, size: 0.018 },
+    { inner: 1.10, outer: 2.20, count: 1200, opacity: 0.55, size: 0.016 },
+    { inner: 2.30, outer: 3.10, count: 800, opacity: 0.25, size: 0.014 },
+    { inner: 3.20, outer: 4.00, count: 1000, opacity: 0.70, size: 0.018 },
   ];
 
   return (
@@ -148,7 +148,7 @@ const Saturn = () => {
       >
         {/* Invisible interaction disc */}
         <mesh rotation={[Math.PI / 2 + 0.15, 0, 0]}>
-          <circleGeometry args={[3.5, 32]} />
+          <circleGeometry args={[4.2, 32]} />
           <meshBasicMaterial visible={false} side={DoubleSide} />
         </mesh>
 
