@@ -1,7 +1,7 @@
 .experience-wrapper {
   position: relative;
   width: 100%;
-  height: 400vh; /* Increased height significantly slows down the scroll animation speed */
+  height: 600vh; /* Increased height significantly slows down the scroll animation speed */
   z-index: 10;
 }
 
@@ -47,6 +47,15 @@
 
 .moon-image:hover {
   transform: scale(1.05);
+}
+
+.moon-image:focus {
+  outline: none;
+}
+
+.moon-image:focus-visible {
+  outline: 2px solid rgba(255, 255, 255, 0.3);
+  outline-offset: 4px;
 }
 
 .experience-label {

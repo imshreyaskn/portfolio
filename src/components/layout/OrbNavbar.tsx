@@ -351,7 +351,16 @@ const Orb = React.forwardRef<
       <a
         href={`#${node.id}`}
         className={`orb-hit-area ${isExpanded ? 'expanded' : 'collapsed'}`}
-        onClick={(e) => { e.stopPropagation(); onOrbClick(); }}
+        onClick={(e) => { 
+          e.stopPropagation(); 
+          onOrbClick(); 
+          
+          // Force manual scroll for Mac Chrome / Safari compatibility
+          const target = document.getElementById(node.id);
+          if (target) {
+            target.scrollIntoView({ behavior: 'smooth' });
+          }
+        }}
       />
 
       {/* Glowing dot */}
