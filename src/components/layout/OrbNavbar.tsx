@@ -278,6 +278,30 @@ const OrbNavbar = () => {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Bottom Left Context Tooltip */}
+      <div style={{ position: 'fixed', left: '2vw', bottom: '2vw', zIndex: 90, pointerEvents: 'none' }}>
+        <AnimatePresence mode="wait">
+          {activeSection && activeSection !== 'footer' && (
+            <motion.div
+              key={activeSection}
+              initial={{ opacity: 0, x: -10 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -10 }}
+              transition={{ duration: 0.3 }}
+              className="section-tooltip"
+            >
+              <span style={{ fontSize: '14px', opacity: 0.8 }}>✦</span>
+              <span>
+                {activeSection === 'home' && "Hover top right orb to navigate"}
+                {activeSection === 'skills' && "Drag to rotate particle sphere"}
+                {activeSection === 'experience' && "Scroll to explore timeline"}
+                {activeSection === 'projects' && "Scroll to orbit around Saturn"}
+              </span>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
     </div>
   );
 };
