@@ -190,7 +190,7 @@ const ConnectModal: React.FC<ConnectModalProps> = ({ isOpen, onClose }) => {
               </button>
             </div>
           </motion.div>
-        </motion.div>
+        </div>
       )}
     </AnimatePresence>
   );
