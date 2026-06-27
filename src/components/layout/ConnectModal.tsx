@@ -11,6 +11,7 @@ const ConnectModal: React.FC<ConnectModalProps> = ({ isOpen, onClose }) => {
   const [name, setName] = useState('');
   const [fromEmail, setFromEmail] = useState('');
   const [body, setBody] = useState('');
+  const [botcheck, setBotcheck] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
@@ -18,9 +19,11 @@ const ConnectModal: React.FC<ConnectModalProps> = ({ isOpen, onClose }) => {
   useEffect(() => {
     if (!isOpen) return;
 
-    // Close the modal when the window scrolls
+    // Close the modal when the window scrolls, ONLY if the user hasn't typed anything
     const handleScroll = () => {
-      onClose();
+      if (name.length === 0 && fromEmail.length === 0 && body.length === 0) {
+        onClose();
+      }
     };
 
     window.addEventListener('scroll', handleScroll, { passive: true });
@@ -31,6 +34,16 @@ const ConnectModal: React.FC<ConnectModalProps> = ({ isOpen, onClose }) => {
   }, [isOpen, onClose]);
 
   const handleSubmit = async () => {
+    // Spam protection honeypot
+    if (botcheck) {
+      setIsSuccess(true);
+      setTimeout(() => {
+        onClose();
+        setIsSuccess(false);
+      }, 2000);
+      return;
+    }
+
     if (!name || !fromEmail || !body) {
       setErrorMsg('Please fill in all fields.');
       return;
@@ -83,12 +96,12 @@ const ConnectModal: React.FC<ConnectModalProps> = ({ isOpen, onClose }) => {
     <AnimatePresence>
       {isOpen && (
         <div className="connect-modal-overlay" onClick={onClose}>
-          {/* Spreading black background */}
+          {/* Spreading black background - Hardware accelerated */}
           <motion.div
             className="connect-modal-bg"
-            initial={{ clipPath: 'circle(0% at 50% 50%)', opacity: 0 }}
-            animate={{ clipPath: 'circle(150% at 50% 50%)', opacity: 1 }}
-            exit={{ clipPath: 'circle(0% at 50% 50%)', opacity: 0 }}
+            initial={{ scale: 0, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            exit={{ scale: 0, opacity: 0 }}
             transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
           />
 
@@ -115,6 +128,16 @@ const ConnectModal: React.FC<ConnectModalProps> = ({ isOpen, onClose }) => {
                 disabled 
               />
             </div>
+
+            {/* Honeypot for spam bots */}
+            <input 
+              type="checkbox" 
+              name="botcheck" 
+              className="hidden" 
+              style={{ display: 'none' }} 
+              checked={!!botcheck}
+              onChange={(e) => setBotcheck(e.target.value)}
+            />
 
             <div className="connect-form-group">
               <label>Name</label>

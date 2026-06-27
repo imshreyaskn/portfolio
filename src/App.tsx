@@ -8,6 +8,7 @@ import Hero from './components/sections/Hero';
 import OrbNavbar from './components/layout/OrbNavbar';
 import Footer from './components/layout/Footer';
 import LoadingScreen from './components/layout/LoadingScreen';
+import ConnectModal from './components/layout/ConnectModal';
 import { useIsMobile } from './hooks/useIsMobile';
 
 const Skills = lazy(() => import('./components/sections/Skills'));
@@ -19,6 +20,7 @@ const rootElement = document.getElementById('root');
 
 function App() {
   const [isLoading, setIsLoading] = useState(true);
+  const [isConnectModalOpen, setIsConnectModalOpen] = useState(false);
   const isMobile = useIsMobile(1023);
 
   if (isMobile) {
@@ -58,14 +60,14 @@ function App() {
       <StarMapBackground />
       <OrbNavbar />
       <main className="main-content">
-        <Hero />
+        <Hero onOpenConnectModal={() => setIsConnectModalOpen(true)} />
         <Suspense fallback={null}>
           <Skills />
           <Experience />
           <Projects />
         </Suspense>
       </main>
-      <Footer />
+      <Footer onOpenConnectModal={() => setIsConnectModalOpen(true)} />
       {rootElement && (
         <Canvas
           eventSource={rootElement}
@@ -77,6 +79,7 @@ function App() {
           <View.Port />
         </Canvas>
       )}
+      <ConnectModal isOpen={isConnectModalOpen} onClose={() => setIsConnectModalOpen(false)} />
     </>
   );
 }

@@ -1,10 +1,7 @@
-import { useState } from 'react';
 import { motion } from 'framer-motion';
-import ConnectModal from '../layout/ConnectModal';
 import './Hero.css';
 
-const Hero = () => {
-  const [isConnectModalOpen, setIsConnectModalOpen] = useState(false);
+const Hero = ({ onOpenConnectModal }: { onOpenConnectModal: () => void }) => {
   // Staggered animation variants for premium reveal
   const container = {
     hidden: { opacity: 0 },
@@ -76,7 +73,7 @@ const Hero = () => {
           {/* Detached CTA Component */}
           <motion.div variants={item} className="hero-cta-wrapper">
             <motion.button 
-              onClick={() => setIsConnectModalOpen(true)}
+              onClick={onOpenConnectModal}
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
               className="framer-button hero-cta"
@@ -87,11 +84,6 @@ const Hero = () => {
 
         </motion.div>
       </div>
-
-      <ConnectModal 
-        isOpen={isConnectModalOpen} 
-        onClose={() => setIsConnectModalOpen(false)} 
-      />
     </section>
   );
 };

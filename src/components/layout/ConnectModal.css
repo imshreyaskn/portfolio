@@ -6,12 +6,19 @@
   align-items: center;
   justify-content: center;
   padding: 1.5rem;
+  overflow: hidden;
 }
 
 .connect-modal-bg {
   position: absolute;
-  inset: 0;
+  top: 50%;
+  left: 50%;
+  width: 300vmax;
+  height: 300vmax;
+  margin-top: -150vmax;
+  margin-left: -150vmax;
   background-color: rgba(5, 5, 8, 0.95);
+  border-radius: 50%;
   z-index: -1;
 }
 

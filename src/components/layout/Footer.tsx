@@ -1,7 +1,7 @@
 import { motion } from 'framer-motion';
 import './Footer.css';
 
-const Footer = () => {
+const Footer = ({ onOpenConnectModal }: { onOpenConnectModal: () => void }) => {
   return (
     <footer id="footer" className="footer-section">
       <div className="footer-animated-border" />
@@ -29,14 +29,15 @@ const Footer = () => {
             linkedin
           </motion.a>
 
-          <motion.a 
-            href="mailto:imshreyaskn@gmail.com" 
+          <motion.button 
+            onClick={onOpenConnectModal}
             className="footer-text-link"
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
+            style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
           >
             mail
-          </motion.a>
+          </motion.button>
 
           <motion.a 
             href="https://drive.google.com/file/d/1xkwCVuQZmElNuCnR7d3vqgr9eqzklVi2/view?usp=sharing" 
