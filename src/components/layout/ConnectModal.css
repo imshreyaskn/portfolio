@@ -13,10 +13,12 @@
 
 .connect-modal {
   width: 100%;
-  max-width: 480px;
-  background: rgba(10, 10, 15, 0.7);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 12px;
+  max-width: 560px;
+  background: rgba(255, 255, 255, 0.04);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 0px;
   padding: 2.5rem;
   box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5), inset 0 0 20px rgba(255, 255, 255, 0.05);
   position: relative;
@@ -66,7 +68,7 @@
 .connect-input, .connect-textarea {
   background: rgba(0, 0, 0, 0.3);
   border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 6px;
+  border-radius: 0px;
   padding: 0.75rem 1rem;
   color: #fff;
   font-family: 'Jost', sans-serif;
@@ -105,7 +107,7 @@
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid rgba(255, 255, 255, 0.15);
   color: rgba(255, 255, 255, 0.8);
-  border-radius: 6px;
+  border-radius: 0px;
   font-family: 'Jost', sans-serif;
   text-transform: uppercase;
   letter-spacing: 0.1em;
