@@ -87,18 +87,36 @@
   min-width: 320px;
   max-width: 620px;
   height: max-content;
-  min-height: 580px;
+  max-height: 80vh;
+  overflow-y: auto;
+  overscroll-behavior: contain;
   background: rgba(0, 0, 0, 0.65);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   z-index: 100;
-  padding: 60px 40px;
+  padding: 50px 30px;
   display: flex;
   flex-direction: column;
   color: rgba(255, 255, 255, 0.9);
   box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
   contain: layout style;
   will-change: transform;
+}
+
+/* Custom scrollbar for panel */
+.experience-panel::-webkit-scrollbar {
+  width: 6px;
+}
+.experience-panel::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 4px;
+}
+.experience-panel::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
+}
+.experience-panel::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.3);
 }
 
 .experience-panel.panel-left {

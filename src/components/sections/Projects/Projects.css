@@ -88,7 +88,7 @@
   top: 27.5dvh; /* Perfectly aligns with Saturn's 3D optical equator */
   left: 50vw; /* Using vw guarantees perfect alignment with WebGL canvas center, ignoring DOM scrollbars */
   transform: translateX(-50%);
-  width: 8.5vh; /* Dynamically tracks Saturn core width, providing enough spacing so lines are distinct */
+  width: clamp(20px, 4.5vh, 40px); /* Dynamically tracks Saturn core width, providing enough spacing so lines are distinct */
   height: 75dvh;
   pointer-events: none;
 }
