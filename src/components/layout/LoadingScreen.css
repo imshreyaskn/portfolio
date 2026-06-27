@@ -29,7 +29,7 @@
   background: #000;
   border-radius: 50%;
   /* Glow behind the black hole, creating an eclipse effect */
-  box-shadow: 0 0 40px 15px rgba(255, 255, 255, 0.8), 0 0 80px 30px rgba(107, 156, 255, 0.4);
+  box-shadow: 0 0 40px 15px rgba(255, 255, 255, 0.8), 0 0 80px 30px rgba(255, 240, 150, 0.3);
   z-index: 10;
 }
 
@@ -46,7 +46,7 @@
   height: 280px;
   border-width: 2px;
   border-top-color: rgba(255, 255, 255, 0.9);
-  border-right-color: rgba(107, 156, 255, 0.5);
+  border-right-color: rgba(220, 220, 225, 0.6);
   border-bottom-color: rgba(255, 255, 255, 0.2);
   filter: drop-shadow(0 0 15px rgba(255, 255, 255, 0.6));
 }
@@ -56,8 +56,8 @@
   height: 180px;
   border-width: 1.5px;
   border-bottom-color: rgba(255, 255, 255, 1);
-  border-left-color: rgba(107, 156, 255, 0.8);
-  filter: drop-shadow(0 0 20px rgba(107, 156, 255, 0.8));
+  border-left-color: rgba(220, 220, 225, 0.8);
+  filter: drop-shadow(0 0 20px rgba(220, 220, 225, 0.8));
 }
 
 .accretion-disk-outer {
