@@ -86,8 +86,12 @@ const ConnectModal: React.FC<ConnectModalProps> = ({ isOpen, onClose }) => {
       } else {
         throw new Error(result.message || "Failed to send email");
       }
-    } catch (err: any) {
-      setErrorMsg(err.message || 'Something went wrong. Please try again.');
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        setErrorMsg(err.message || 'Something went wrong. Please try again.');
+      } else {
+        setErrorMsg('Something went wrong. Please try again.');
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -172,20 +176,13 @@ const ConnectModal: React.FC<ConnectModalProps> = ({ isOpen, onClose }) => {
               />
             </div>
 
-            {errorMsg && <p style={{ color: '#ff4444', fontSize: '13px', marginTop: '-10px', marginBottom: '15px' }}>{errorMsg}</p>}
+            {errorMsg && <p className="connect-error-msg">{errorMsg}</p>}
             
             <div className="connect-actions">
               <button 
-                className="connect-btn connect-btn-primary" 
+                className={`connect-btn connect-btn-primary ${isSubmitting ? 'submitting' : ''} ${isSuccess ? 'success' : ''}`}
                 onClick={handleSubmit}
                 disabled={isSubmitting || isSuccess}
-                style={{ 
-                  opacity: (isSubmitting || isSuccess) ? 0.7 : 1, 
-                  cursor: (isSubmitting || isSuccess) ? 'not-allowed' : 'pointer',
-                  backgroundColor: isSuccess ? 'rgba(76, 175, 80, 0.2)' : undefined,
-                  borderColor: isSuccess ? 'rgba(76, 175, 80, 0.5)' : undefined,
-                  color: isSuccess ? '#4caf50' : undefined
-                }}
               >
                 {isSubmitting ? 'Sending...' : isSuccess ? 'Sent Successfully!' : 'Send'}
               </button>

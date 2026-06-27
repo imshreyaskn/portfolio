@@ -31,10 +31,9 @@ const Footer = ({ onOpenConnectModal }: { onOpenConnectModal: () => void }) => {
 
           <motion.button 
             onClick={onOpenConnectModal}
-            className="footer-text-link"
+            className="footer-text-link footer-mail-btn"
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
-            style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
           >
             mail
           </motion.button>
