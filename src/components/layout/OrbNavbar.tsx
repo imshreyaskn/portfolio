@@ -294,7 +294,7 @@ const OrbNavbar = () => {
               <span style={{ fontSize: '14px', opacity: 0.8 }}>✦</span>
               <span>
                 {activeSection === 'home' && "Hover top right orb to navigate"}
-                {activeSection === 'skills' && "Drag and release to spin the particle sphere"}
+                {activeSection === 'skills' && "Drag and spin the particle sphere to explore"}
                 {activeSection === 'experience' && "Scroll to explore timeline"}
                 {activeSection === 'projects' && "Scroll to orbit around Saturn"}
               </span>
