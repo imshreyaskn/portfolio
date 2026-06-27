@@ -40,10 +40,7 @@ const ConnectModal: React.FC<ConnectModalProps> = ({ isOpen, onClose }) => {
     setErrorMsg('');
 
     try {
-      const accessKey = import.meta.env.VITE_WEB3FORMS_KEY;
-      if (!accessKey) {
-        throw new Error("API key is missing. Please add VITE_WEB3FORMS_KEY to your .env file.");
-      }
+      const accessKey = "3be71592-ae80-4ac0-bf6c-b4682d1b1d4f";
 
       const response = await fetch("https://api.web3forms.com/submit", {
         method: "POST",
