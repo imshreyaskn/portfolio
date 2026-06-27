@@ -16,7 +16,7 @@ export const EXPERIENCES: ExperienceData[] = [
     duration: "Available for Internships & Roles",
     location: "Coimbatore, Tamil Nadu",
     description: [
-      "Third-year Computer Science student with hands-on experience building AI agents, LLM security tools, and automation systems.",
+      "Final-year Computer Science student with hands-on experience building AI agents, LLM security tools, and automation systems.",
       "Developed projects across adversarial red-teaming, browser automation, and self-healing CI/CD workflows.",
       "Strong exposure to cloud infrastructure, backend development, and agent-based architectures.",
       "Actively seeking opportunities to contribute to high-performance engineering teams."
