@@ -27,9 +27,9 @@ const ConnectModal: React.FC<ConnectModalProps> = ({ isOpen, onClose }) => {
       {isOpen && (
         <motion.div
           className="connect-modal-overlay"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
+          initial={{ backgroundColor: "rgba(0, 0, 0, 0)" }}
+          animate={{ backgroundColor: "rgba(0, 0, 0, 0.2)" }}
+          exit={{ backgroundColor: "rgba(0, 0, 0, 0)" }}
           onClick={onClose}
         >
           <motion.div

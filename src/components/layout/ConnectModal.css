@@ -1,7 +1,7 @@
 .connect-modal-overlay {
   position: fixed;
   inset: 0;
-  background-color: rgba(0, 0, 0, 0.2);
+  /* background-color is managed by framer-motion in ConnectModal.tsx */
   z-index: 9999;
   display: flex;
   align-items: center;
@@ -12,7 +12,7 @@
 .connect-modal {
   width: 100%;
   max-width: 560px;
-  background: rgba(10, 10, 15, 0.4);
+  background: rgba(10, 10, 15, 0.6);
   backdrop-filter: blur(40px);
   -webkit-backdrop-filter: blur(40px);
   border: 1px solid rgba(255, 255, 255, 0.15);
