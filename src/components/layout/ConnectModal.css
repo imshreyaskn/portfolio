@@ -1,9 +1,6 @@
 .connect-modal-overlay {
   position: fixed;
   inset: 0;
-  background-color: rgba(0, 0, 0, 0.4);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
   z-index: 9999;
   display: flex;
   align-items: center;
@@ -11,10 +8,17 @@
   padding: 1.5rem;
 }
 
+.connect-modal-bg {
+  position: absolute;
+  inset: 0;
+  background-color: rgba(5, 5, 8, 0.95);
+  z-index: -1;
+}
+
 .connect-modal {
   width: 100%;
   max-width: 560px;
-  background: rgba(10, 10, 15, 0.85);
+  background: rgba(15, 15, 20, 0.85); /* Slightly lighter than the bg to stand out */
   border: 1px solid rgba(255, 255, 255, 0.15);
   border-radius: 0px;
   padding: 2.5rem;

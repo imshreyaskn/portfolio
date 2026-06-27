@@ -25,19 +25,22 @@ const ConnectModal: React.FC<ConnectModalProps> = ({ isOpen, onClose }) => {
   return (
     <AnimatePresence>
       {isOpen && (
-        <motion.div
-          className="connect-modal-overlay"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          onClick={onClose}
-        >
+        <div className="connect-modal-overlay" onClick={onClose}>
+          {/* Spreading black background */}
+          <motion.div
+            className="connect-modal-bg"
+            initial={{ clipPath: 'circle(0% at 50% 50%)', opacity: 0 }}
+            animate={{ clipPath: 'circle(150% at 50% 50%)', opacity: 1 }}
+            exit={{ clipPath: 'circle(0% at 50% 50%)', opacity: 0 }}
+            transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+          />
+
           <motion.div
             className="connect-modal"
             initial={{ scale: 0.9, y: 20, opacity: 0 }}
             animate={{ scale: 1, y: 0, opacity: 1 }}
             exit={{ scale: 0.9, y: 20, opacity: 0 }}
-            transition={{ type: "spring", damping: 25, stiffness: 300 }}
+            transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1], delay: 0.1 }}
             onClick={(e) => e.stopPropagation()}
           >
             <button className="connect-modal-close" onClick={onClose} aria-label="Close modal">
