@@ -11,6 +11,9 @@ const ConnectModal: React.FC<ConnectModalProps> = ({ isOpen, onClose }) => {
   const [name, setName] = useState('');
   const [fromEmail, setFromEmail] = useState('');
   const [body, setBody] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSuccess, setIsSuccess] = useState(false);
+  const [errorMsg, setErrorMsg] = useState('');
 
   useEffect(() => {
     if (!isOpen) return;
@@ -27,14 +30,56 @@ const ConnectModal: React.FC<ConnectModalProps> = ({ isOpen, onClose }) => {
     };
   }, [isOpen, onClose]);
 
-  const getFormattedBody = () => {
-    return `Name: ${name}\nEmail: ${fromEmail}\n\nMessage:\n${body}`;
-  };
+  const handleSubmit = async () => {
+    if (!name || !fromEmail || !body) {
+      setErrorMsg('Please fill in all fields.');
+      return;
+    }
+    
+    setIsSubmitting(true);
+    setErrorMsg('');
 
-  const handleSendMailApp = () => {
-    const mailtoLink = `mailto:imshreyaskn@gmail.com?subject=Portfolio Inquiry&body=${encodeURIComponent(getFormattedBody())}`;
-    window.location.href = mailtoLink;
-    onClose();
+    try {
+      const accessKey = import.meta.env.VITE_WEB3FORMS_KEY;
+      if (!accessKey) {
+        throw new Error("API key is missing. Please add VITE_WEB3FORMS_KEY to your .env file.");
+      }
+
+      const response = await fetch("https://api.web3forms.com/submit", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
+        body: JSON.stringify({
+          access_key: accessKey,
+          name: name,
+          email: fromEmail,
+          message: body,
+          subject: "Portfolio Inquiry from " + name,
+        }),
+      });
+
+      const result = await response.json();
+      if (result.success) {
+        setIsSuccess(true);
+        setTimeout(() => {
+          onClose();
+          setTimeout(() => {
+            setName('');
+            setFromEmail('');
+            setBody('');
+            setIsSuccess(false);
+          }, 500);
+        }, 2000);
+      } else {
+        throw new Error(result.message || "Failed to send email");
+      }
+    } catch (err: any) {
+      setErrorMsg(err.message || 'Something went wrong. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -106,9 +151,22 @@ const ConnectModal: React.FC<ConnectModalProps> = ({ isOpen, onClose }) => {
               />
             </div>
 
+            {errorMsg && <p style={{ color: '#ff4444', fontSize: '13px', marginTop: '-10px', marginBottom: '15px' }}>{errorMsg}</p>}
+            
             <div className="connect-actions">
-              <button className="connect-btn connect-btn-primary" onClick={handleSendMailApp}>
-                Send
+              <button 
+                className="connect-btn connect-btn-primary" 
+                onClick={handleSubmit}
+                disabled={isSubmitting || isSuccess}
+                style={{ 
+                  opacity: (isSubmitting || isSuccess) ? 0.7 : 1, 
+                  cursor: (isSubmitting || isSuccess) ? 'not-allowed' : 'pointer',
+                  backgroundColor: isSuccess ? 'rgba(76, 175, 80, 0.2)' : undefined,
+                  borderColor: isSuccess ? 'rgba(76, 175, 80, 0.5)' : undefined,
+                  color: isSuccess ? '#4caf50' : undefined
+                }}
+              >
+                {isSubmitting ? 'Sending...' : isSuccess ? 'Sent Successfully!' : 'Send'}
               </button>
             </div>
           </motion.div>
