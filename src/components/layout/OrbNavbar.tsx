@@ -352,6 +352,7 @@ const Orb = React.forwardRef<
         href={`#${node.id}`}
         className={`orb-hit-area ${isExpanded ? 'expanded' : 'collapsed'}`}
         onClick={(e) => { 
+          e.preventDefault();
           e.stopPropagation(); 
           onOrbClick(); 
           

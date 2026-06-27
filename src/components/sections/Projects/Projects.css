@@ -88,7 +88,7 @@
   top: 0; /* Positioned relative to the 0x0 Html wrapper centered at Saturn */
   left: 0;
   transform: translateX(-50%);
-  width: clamp(20px, 4.5vh, 40px);
+  width: clamp(30px, 6.5vh, 60px);
   height: 75dvh;
   pointer-events: none;
 }

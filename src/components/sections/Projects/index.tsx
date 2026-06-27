@@ -53,7 +53,7 @@ const Projects = () => {
                 </div>
 
                 {/* 2D Line-Art Planets */}
-                <div className="projects-overlay-container projects-nodes-overlay" style={{ pointerEvents: 'auto' }}>
+                <div className="projects-overlay-container projects-nodes-overlay">
                   <ProjectNodes
                     setHoveredPlanet={setHoveredPlanet}
                     onTapPlanet={handlePlanetTap}
