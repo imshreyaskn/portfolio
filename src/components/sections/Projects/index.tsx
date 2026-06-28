@@ -7,6 +7,13 @@ import ProjectNodes from './ProjectNodes';
 import { generateParticles } from './data';
 import './Projects.css';
 
+const projectTechStacks: Record<string, string> = {
+  "Valerie": "Automated LLM Red Teaming Platform | FastAPI, LangGraph, LiteLLM, PostgreSQL",
+  "Alethia": "Self-Healing CI/CD Agent | FastAPI, LangGraph, Docker, GitHub Apps",
+  "Lucy": "Voice-Controlled Accessibility Agent | Browser Automation, Agent Orchestration",
+  "Relay": "Decentralized Disaster Communication Network | ESP32, React Native, Mesh Networking",
+};
+
 const Projects = () => {
   const [hoveredPlanet, setHoveredPlanet] = useState<string | null>(null);
   const particles = useMemo(() => generateParticles(), []);
@@ -78,7 +85,8 @@ const Projects = () => {
             transition={{ duration: 0.25 }}
             className="projects-hover-label"
           >
-            {hoveredPlanet}
+            <div className="project-title silver-glow-text">{hoveredPlanet}</div>
+            <div className="project-tech-stack">{projectTechStacks[hoveredPlanet]}</div>
           </motion.div>
         )}
       </AnimatePresence>

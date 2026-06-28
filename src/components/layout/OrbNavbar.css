@@ -59,6 +59,12 @@
   pointer-events: none;
 }
 
+@keyframes orb-idle-pulse {
+  0% { transform: scale(1); box-shadow: 0 0 8px rgba(255,255,255,0.8), 0 0 16px rgba(107, 156, 255, 0.4); }
+  50% { transform: scale(1.4); box-shadow: 0 0 12px rgba(255,255,255,1), 0 0 24px rgba(107, 156, 255, 0.8); }
+  100% { transform: scale(1); box-shadow: 0 0 8px rgba(255,255,255,0.8), 0 0 16px rgba(107, 156, 255, 0.4); }
+}
+
 .orb-glow-dot {
   width: 4px;
   height: 4px;
@@ -68,12 +74,15 @@
   position: absolute;
   top: -2px;
   left: -2px;
-  transition: transform 0.3s ease;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
   pointer-events: none;
+  animation: orb-idle-pulse 2.5s infinite ease-in-out;
 }
 
 .orb-glow-dot.hovered {
   transform: scale(1.8);
+  animation: none;
+  box-shadow: 0 0 12px rgba(255,255,255,1), 0 0 32px rgba(107, 156, 255, 0.9);
 }
 
 .orb-label {
