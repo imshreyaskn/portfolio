@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect, useRef, useMemo } from 'react';
 import { OrbitControls, View, PerspectiveCamera } from '@react-three/drei';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, useInView } from 'framer-motion';
 import { SKILLS_DATA, SkillItem } from './data';
 import ParticleSphere from './ParticleSphere';
 import { useIsMobile } from '../../../hooks/useIsMobile';
@@ -24,7 +24,11 @@ const ConstellationGraph = ({ skills, isMobile }: { skills: SkillItem[]; isMobil
     return arr;
   }, [skills]);
 
+
+  const isInView = useInView(containerRef, { margin: "200px" });
+
   useEffect(() => {
+    if (!isInView) return;
     let frameId: number;
     const animate = () => {
       const time = performance.now() * 0.001;
@@ -60,7 +64,7 @@ const ConstellationGraph = ({ skills, isMobile }: { skills: SkillItem[]; isMobil
     };
     animate();
     return () => cancelAnimationFrame(frameId);
-  }, [skills, edges]);
+  }, [skills, edges, isInView]);
 
   return (
     <div
@@ -117,6 +121,8 @@ const Skills = () => {
   const isMobile = useIsMobile();
   const isNonDesktop = useIsMobile(1023);
   const viewRef = useRef<HTMLDivElement>(null);
+  const sectionRef = useRef<HTMLElement>(null);
+  const isInView = useInView(sectionRef, { margin: "200px" });
 
   const handleSelect = useCallback((index: number) => {
     setSelectedIndex((prev) => (prev === index ? null : index));
@@ -149,6 +155,7 @@ const Skills = () => {
     <section
       id="skills"
       className="skills-section"
+      ref={sectionRef}
     >
       {/* Global Animated Gradient for Icons */}
       <svg width="0" height="0" style={{ position: 'absolute' }}>
@@ -242,7 +249,7 @@ const Skills = () => {
             />
           )}
           <group scale={isMobile ? 0.5 : (isNonDesktop ? 0.65 : 1)}>
-            <ParticleSphere count={300} radius={0.5} onSelect={handleSelect} portalRef={viewRef} />
+            <ParticleSphere count={300} radius={0.5} onSelect={handleSelect} portalRef={viewRef} isActive={isInView} />
           </group>
         </View>
       </motion.div>

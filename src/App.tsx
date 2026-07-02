@@ -94,7 +94,7 @@ function App() {
         </Suspense>
       </main>
       <Footer onOpenConnectModal={handleOpenConnectModal} />
-      {rootElement && (
+      {rootElement && !isLoading && (
         <Canvas
           eventSource={rootElement}
           gl={{ antialias: false, powerPreference: 'high-performance' }}

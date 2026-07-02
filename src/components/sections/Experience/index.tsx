@@ -85,14 +85,10 @@ const Experience = () => {
   const smoothProgress = useSpring(scrollYProgress, { stiffness: 100, damping: 30, restDelta: 0.001 });
   const scrollVelocity = useVelocity(smoothProgress);
 
-  const spaceshipFilter = useTransform(
+  const spaceshipGlowOpacity = useTransform(
     scrollVelocity,
     [-0.5, 0, 0.5],
-    [
-      'drop-shadow(0 0 50px rgba(255,255,255,0.95)) drop-shadow(0 0 25px rgba(255,255,255,0.8)) drop-shadow(0 0 8px rgba(255,255,255,0.6))',
-      'drop-shadow(0 0 10px rgba(255,255,255,0.3)) drop-shadow(0 0 5px rgba(255,255,255,0.15)) drop-shadow(0 0 0px rgba(255,255,255,0))',
-      'drop-shadow(0 0 50px rgba(255,255,255,0.95)) drop-shadow(0 0 25px rgba(255,255,255,0.8)) drop-shadow(0 0 8px rgba(255,255,255,0.6))'
-    ]
+    [1, 0, 1]
   );
 
   const spaceshipY = useTransform(smoothProgress, [0, 1], ['40vh', '-40vh']);
@@ -144,9 +140,31 @@ const Experience = () => {
           transition={{ type: 'spring', stiffness: 80, damping: 20 }}
           style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative' }}
         >
+          {/* Base Spaceship (Idle glow) */}
           <motion.div
             className="spaceship"
-            style={{ y: spaceshipY, x: spaceshipX, rotate: spaceshipRotate, filter: spaceshipFilter }}
+            style={{ 
+              y: spaceshipY, 
+              x: spaceshipX, 
+              rotate: spaceshipRotate, 
+              filter: 'drop-shadow(0 0 10px rgba(255,255,255,0.3)) drop-shadow(0 0 5px rgba(255,255,255,0.15))' 
+            }}
+          >
+            <svg viewBox="0 0 24 24" width={isMobile ? "18" : "32"} height={isMobile ? "18" : "32"} fill="rgba(0,0,0,0.6)" stroke="white" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M12 2 L6 12 L12 22 L18 12 Z" />
+            </svg>
+          </motion.div>
+
+          {/* Velocity Spaceship (Max glow, animated opacity instead of animated filter) */}
+          <motion.div
+            className="spaceship"
+            style={{ 
+              y: spaceshipY, 
+              x: spaceshipX, 
+              rotate: spaceshipRotate, 
+              opacity: spaceshipGlowOpacity,
+              filter: 'drop-shadow(0 0 50px rgba(255,255,255,0.95)) drop-shadow(0 0 25px rgba(255,255,255,0.8)) drop-shadow(0 0 8px rgba(255,255,255,0.6))' 
+            }}
           >
             <svg viewBox="0 0 24 24" width={isMobile ? "18" : "32"} height={isMobile ? "18" : "32"} fill="rgba(0,0,0,0.6)" stroke="white" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round">
               <path d="M12 2 L6 12 L12 22 L18 12 Z" />

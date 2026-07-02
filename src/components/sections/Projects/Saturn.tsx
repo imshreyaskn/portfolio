@@ -95,13 +95,14 @@ const RING_DATA = [
   { inner: 3.50, outer: 4.30, count: 1000, opacity: 0.50, size: 0.018 },
 ];
 
-const Saturn = () => {
+const Saturn = ({ isActive = true }: { isActive?: boolean }) => {
   const ringsRef       = useRef<Group>(null);
   const outlineMatRef  = useRef<ShaderMaterial>(null);
 
   const outlineUniforms = useMemo(() => ({ uTime: { value: 0 } }), []);
 
   useFrame(({ clock }, delta) => {
+    if (!isActive) return;
     // Rotate particle rings slowly
     if (ringsRef.current) {
       ringsRef.current.rotation.z -= delta * 0.02;

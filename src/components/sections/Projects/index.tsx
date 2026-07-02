@@ -1,4 +1,5 @@
-import { useState, useMemo } from 'react';
+import { useRef, useState, useMemo } from 'react';
+import { useInView } from 'framer-motion';
 import { motion, AnimatePresence } from 'framer-motion';
 import { View, PerspectiveCamera, Html } from '@react-three/drei';
 import { useIsMobile } from '../../../hooks/useIsMobile';
@@ -24,14 +25,17 @@ const Projects = () => {
     setHoveredPlanet(prev => prev === name ? null : name);
   };
 
+  const containerRef = useRef<HTMLElement>(null);
+  const isInView = useInView(containerRef, { margin: "200px" });
+
   return (
-    <section id="projects" className="projects-section">
+    <section id="projects" className="projects-section" ref={containerRef}>
       {/* 3D Canvas */}
       <div className="projects-canvas-wrapper">
         <View className="projects-canvas-view">
           <PerspectiveCamera makeDefault position={[0, 0, 8]} fov={45} />
           <group position={[0, 1.5, 0]}>
-            <Saturn />
+            <Saturn isActive={isInView} />
             <Html center position={[0, -0.05, 0]} zIndexRange={[10, 20]}>
               <div style={{ position: 'relative', width: 0, height: 0, pointerEvents: 'none' }}>
                 {/* 2D Hanging Threads Overlay */}

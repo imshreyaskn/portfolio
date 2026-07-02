@@ -10,11 +10,12 @@ const GLOBAL_OFFSET = -Math.PI / 10; // Rotates the 5-item layout so index 1 is 
 interface ParticleSphereProps {
   count?: number;
   radius?: number;
-  onSelect?: (index: number) => void;
-  portalRef?: React.RefObject<HTMLElement | null>;
+  onSelect: (skill: { id: string; category: string } | null, nodePos: Vector3 | null) => void;
+  portalRef: React.RefObject<HTMLElement | null>;
+  isActive?: boolean;
 }
 
-const ParticleSphere = memo(({ count = 300, radius = 0.5, onSelect, portalRef }: ParticleSphereProps) => {
+const ParticleSphere = memo(({ count = 300, radius = 0.5, onSelect, portalRef, isActive = true }: ParticleSphereProps) => {
   const isMobile = useIsMobile();
   const pointsRef = useRef<Points>(null);
   const materialRef = useRef<PointsMaterial>(null);
@@ -205,6 +206,8 @@ const ParticleSphere = memo(({ count = 300, radius = 0.5, onSelect, portalRef }:
 
   // 60FPS Physics Loop
   useFrame((state, delta) => {
+    if (!isActive) return;
+
     // Only capture pointer position if active
     if (isInteracting.current || isHolding.current) {
       pointerRef.current.x = state.pointer.x;
