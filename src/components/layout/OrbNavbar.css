@@ -144,3 +144,23 @@
   pointer-events: none;
   text-shadow: 0 2px 8px rgba(0, 0, 0, 0.6);
 }
+.orb-label-static {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(10px, -10px);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+  color: var(--text-primary);
+  font-family: 'Jost', sans-serif;
+  font-size: 12px;
+  font-weight: 400;
+  letter-spacing: 0.1em;
+  white-space: nowrap;
+}
+
+.orb-label-static.visible {
+  opacity: 1;
+  transform: translate(20px, -10px);
+}

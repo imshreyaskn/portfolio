@@ -1,5 +1,25 @@
 import { useEffect, useRef } from 'react';
 
+interface Particle {
+  x: number;
+  y: number;
+  vx: number;
+  vy: number;
+  radius: number;
+}
+
+interface Line {
+  x1: number;
+  y1: number;
+  x2: number;
+  y2: number;
+}
+
+const TARGET_FPS = 30;
+const TARGET_INTERVAL = 1000 / TARGET_FPS;
+const CONNECT_DIST = 110;
+const CONNECT_DIST_SQ = CONNECT_DIST * CONNECT_DIST;
+
 const StarMapBackground = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
@@ -8,23 +28,35 @@ const StarMapBackground = () => {
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
-    let animationFrameId: number;
-    let particles: {x: number, y: number, vx: number, vy: number, radius: number}[] = [];
-    let resizeTimer: ReturnType<typeof setTimeout>;
-    let frameCount = 0;
 
-    // ~30fps cap: only process a frame if at least 33ms have elapsed.
-    // Stars drift slowly so 30fps is visually indistinguishable from 60fps,
-    // but halves the CPU cost of the particle loop and O(n log n) sort.
+    let animationFrameId: number;
+    let resizeTimer: ReturnType<typeof setTimeout>;
     let lastFrameTime = 0;
-    const TARGET_INTERVAL = 1000 / 30; // 33.3ms
-    
+
+    let lastScrollY = window.scrollY || 0;
+    let w = window.innerWidth;
+    let h = window.innerHeight * 1.2;
+
+    const fgParticles: Particle[] = [];
+    const bgParticles: Particle[] = [];
+
+    // Zero-allocation buckets to prevent Garbage Collection pauses during render loop
+    const fgBuckets: Particle[][] = Array.from({ length: 8 }, () => []);
+    const fgBucketCounts = new Int32Array(8);
+
+    const bgBuckets: Particle[][] = Array.from({ length: 6 }, () => []);
+    const bgBucketCounts = new Int32Array(6);
+
+    const lineBuckets: Line[][] = Array.from({ length: 5 }, () => []);
+    const lineBucketCounts = new Int32Array(5);
+
     const resize = () => {
       const dpr = Math.min(window.devicePixelRatio || 1, 1.5);
-      const h = window.innerHeight * 1.2;
-      canvas.width = window.innerWidth * dpr;
+      w = window.innerWidth;
+      h = window.innerHeight * 1.2;
+      canvas.width = w * dpr;
       canvas.height = h * dpr;
-      canvas.style.width = window.innerWidth + 'px';
+      canvas.style.width = w + 'px';
       canvas.style.height = h + 'px';
       ctx.setTransform(1, 0, 0, 1, 0, 0);
       ctx.scale(dpr, dpr);
@@ -32,119 +64,169 @@ const StarMapBackground = () => {
     };
 
     const initParticles = () => {
-      particles = [];
-      const h = window.innerHeight * 1.2;
-      const numParticles = Math.min(Math.floor((window.innerWidth * h) / 15000), 250);
+      fgParticles.length = 0;
+      bgParticles.length = 0;
+      const numParticles = Math.min(Math.floor((w * h) / 15000), 250);
       
       for (let i = 0; i < numParticles; i++) {
-        let xPos = Math.random() * window.innerWidth;
-        if (Math.random() > 0.6) {
-           xPos = Math.random() * (window.innerWidth * 0.4); 
-        }
-
-        particles.push({
-          x: xPos,
+        fgParticles.push({
+          x: Math.random() > 0.6 ? Math.random() * (w * 0.4) : Math.random() * w,
           y: Math.random() * h,
           vx: Math.random() * 0.4 + 0.1,
           vy: (Math.random() - 0.5) * 0.3,
           radius: Math.random() * 1.2 + 0.4
         });
       }
+
+      for (let i = 0; i < numParticles * 0.8; i++) {
+        bgParticles.push({
+          x: Math.random() * w,
+          y: Math.random() * h,
+          vx: Math.random() * 0.1 + 0.02,
+          vy: (Math.random() - 0.5) * 0.05,
+          radius: Math.random() * 0.6 + 0.7
+        });
+      }
     };
 
     const draw = (timestamp: number) => {
-      // Throttle to ~30fps — request next frame first so we don't miss a slot,
-      // then bail out early if not enough time has elapsed.
       animationFrameId = requestAnimationFrame(draw);
 
       if (timestamp - lastFrameTime < TARGET_INTERVAL) return;
       lastFrameTime = timestamp;
 
-      const h = window.innerHeight * 1.2;
-      ctx.clearRect(0, 0, window.innerWidth, h);
+      const currentScrollY = window.scrollY;
+      const scrollDelta = currentScrollY - lastScrollY;
+      lastScrollY = currentScrollY;
+
+      const fgScroll = scrollDelta * 0.25;
+      const bgScroll = scrollDelta * 0.1;
+
+      ctx.clearRect(0, 0, w, h);
       
-      const buckets: Record<string, typeof particles> = {
-        '0.1': [], '0.2': [], '0.3': [], '0.4': [], '0.5': [], '0.6': [], '0.7': [], '0.8': []
-      };
+      fgBucketCounts.fill(0);
+      bgBucketCounts.fill(0);
+      lineBucketCounts.fill(0);
 
-      for (let i = 0; i < particles.length; i++) {
-        let p = particles[i];
+      // Process BG (Inlined for zero function overhead)
+      for (let i = 0; i < bgParticles.length; i++) {
+        const p = bgParticles[i];
         p.x += p.vx;
-        p.y += p.vy;
-        
-        if (p.x > window.innerWidth + 10) {
-          p.x = -10;
-          p.y = Math.random() * h;
-        }
-        if (p.y < -10) p.y = h + 10;
-        if (p.y > h + 10) p.y = -10;
+        p.y += p.vy - bgScroll;
+        if (p.x > w + 10) { p.x = -10; p.y = Math.random() * h; }
+        while (p.y < -10) p.y += h + 20;
+        while (p.y > h + 10) p.y -= h + 20;
 
-        const opacity = Math.max(0.1, 0.8 * (1 - p.x / window.innerWidth));
-        const bucketKey = Math.max(0.1, Math.min(0.8, Math.round(opacity * 10) / 10)).toFixed(1);
-        buckets[bucketKey].push(p);
+        let rawOpacity = 0.6 * (1 - p.x / w);
+        if (rawOpacity < 0.1) rawOpacity = 0.1;
+        let idx = Math.round(rawOpacity * 10) - 1;
+        if (idx < 0) idx = 0;
+        if (idx > 5) idx = 5;
+        bgBuckets[idx][bgBucketCounts[idx]++] = p;
       }
 
-      for (const opacityStr in buckets) {
-        const bucketParticles = buckets[opacityStr];
-        if (bucketParticles.length === 0) continue;
-        ctx.beginPath();
-        for (let i = 0; i < bucketParticles.length; i++) {
-          const p = bucketParticles[i];
-          ctx.moveTo(p.x + p.radius, p.y);
-          ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+      // Process FG (Inlined)
+      for (let i = 0; i < fgParticles.length; i++) {
+        const p = fgParticles[i];
+        p.x += p.vx;
+        p.y += p.vy - fgScroll;
+        if (p.x > w + 10) { p.x = -10; p.y = Math.random() * h; }
+        while (p.y < -10) p.y += h + 20;
+        while (p.y > h + 10) p.y -= h + 20;
+
+        let rawOpacity = 0.8 * (1 - p.x / w);
+        if (rawOpacity < 0.1) rawOpacity = 0.1;
+        let idx = Math.round(rawOpacity * 10) - 1;
+        if (idx < 0) idx = 0;
+        if (idx > 7) idx = 7;
+        fgBuckets[idx][fgBucketCounts[idx]++] = p;
+      }
+
+      // Draw BG (Using fillRect for tiny background particles is up to 5x faster than arc paths)
+      for (let i = 0; i < 6; i++) {
+        const count = bgBucketCounts[i];
+        if (count === 0) continue;
+        
+        ctx.fillStyle = `rgba(180, 200, 255, ${(i + 1) * 0.1})`;
+        const bucket = bgBuckets[i];
+        for (let j = 0; j < count; j++) {
+          const p = bucket[j];
+          // Background particles are 0.7 to 1.3px radius. Rectangles are perfectly visually equivalent to circles here.
+          ctx.fillRect(p.x - p.radius, p.y - p.radius, p.radius * 2, p.radius * 2);
         }
-        ctx.fillStyle = `rgba(255, 255, 255, ${opacityStr})`;
+      }
+
+      // Draw FG (Foreground particles are larger, so we keep standard arc paths but batched)
+      const TWO_PI = Math.PI * 2;
+      for (let i = 0; i < 8; i++) {
+        const count = fgBucketCounts[i];
+        if (count === 0) continue;
+        
+        ctx.beginPath();
+        const bucket = fgBuckets[i];
+        for (let j = 0; j < count; j++) {
+          const p = bucket[j];
+          ctx.moveTo(p.x + p.radius, p.y);
+          ctx.arc(p.x, p.y, p.radius, 0, TWO_PI);
+        }
+        ctx.fillStyle = `rgba(255, 255, 255, ${(i + 1) * 0.1})`;
         ctx.fill();
       }
 
-      // Amortize sort: only sort every 10 frames to reduce O(n log n) overhead
-      frameCount++;
-      if (frameCount % 10 === 0) {
-        particles.sort((a, b) => a.x - b.x);
-      }
+      // Sort EVERY frame! V8's Timsort is O(N) for nearly sorted arrays.
+      // This is mathematically required to make the inner-loop Sweep-and-Prune 'break' condition safe and 100% effective.
+      fgParticles.sort((a, b) => a.x - b.x);
 
-      const connectDistSq = 110 * 110;
       ctx.lineWidth = 0.4;
-      
-      const lineBuckets: Record<string, {x1: number, y1: number, x2: number, y2: number}[]> = {
-        '0.02': [], '0.04': [], '0.06': [], '0.08': [], '0.10': []
-      };
 
-      for (let i = 0; i < particles.length; i++) {
-        for (let j = i + 1; j < particles.length; j++) {
-          const dx = particles[i].x - particles[j].x;
-          // Because particles are sorted by x, if dx > connectDist, no further j can be close enough
-          if (dx * dx > connectDistSq) break;
+      // Sweep and Prune collision lines
+      for (let i = 0; i < fgParticles.length; i++) {
+        const p1 = fgParticles[i];
+        for (let j = i + 1; j < fgParticles.length; j++) {
+          const p2 = fgParticles[j];
+          const dx = p1.x - p2.x;
+          // dx is guaranteed to be <= 0 because array is strictly sorted ascending.
+          // Therefore dx*dx is equivalent to (p2.x - p1.x)^2. If this exceeds dist, ALL subsequent j will also exceed it!
+          if (dx * dx > CONNECT_DIST_SQ) break;
           
-          const dy = particles[i].y - particles[j].y;
+          const dy = p1.y - p2.y;
           const distSq = dx * dx + dy * dy;
           
-          if (distSq < connectDistSq) {
+          if (distSq < CONNECT_DIST_SQ) {
             const dist = Math.sqrt(distSq);
-            const lineOpacity = 0.1 * (1 - dist / 110);
+            const lineOpacity = 0.1 * (1 - dist / CONNECT_DIST);
             if (lineOpacity <= 0.01) continue;
             
-            const bucketKey = Math.min(0.10, Math.ceil(lineOpacity / 0.02) * 0.02).toFixed(2);
-            if (lineBuckets[bucketKey]) {
-              lineBuckets[bucketKey].push({
-                x1: particles[i].x, y1: particles[i].y,
-                x2: particles[j].x, y2: particles[j].y
-              });
+            let idx = Math.ceil(lineOpacity / 0.02) - 1;
+            if (idx < 0) idx = 0;
+            if (idx > 4) idx = 4;
+            
+            const lineBucket = lineBuckets[idx];
+            const lineIdx = lineBucketCounts[idx]++;
+            
+            if (lineIdx < lineBucket.length) {
+              const l = lineBucket[lineIdx];
+              l.x1 = p1.x; l.y1 = p1.y; l.x2 = p2.x; l.y2 = p2.y;
+            } else {
+              lineBucket.push({ x1: p1.x, y1: p1.y, x2: p2.x, y2: p2.y });
             }
           }
         }
       }
 
-      for (const opacityStr in lineBuckets) {
-        const lines = lineBuckets[opacityStr];
-        if (lines.length === 0) continue;
+      // Draw Lines
+      for (let i = 0; i < 5; i++) {
+        const count = lineBucketCounts[i];
+        if (count === 0) continue;
+        
         ctx.beginPath();
-        for (let i = 0; i < lines.length; i++) {
-          const l = lines[i];
+        const bucket = lineBuckets[i];
+        for (let j = 0; j < count; j++) {
+          const l = bucket[j];
           ctx.moveTo(l.x1, l.y1);
           ctx.lineTo(l.x2, l.y2);
         }
-        ctx.strokeStyle = `rgba(255, 255, 255, ${opacityStr})`;
+        ctx.strokeStyle = `rgba(255, 255, 255, ${(i + 1) * 0.02})`;
         ctx.stroke();
       }
     };
@@ -154,8 +236,7 @@ const StarMapBackground = () => {
       resizeTimer = setTimeout(resize, 150);
     };
 
-    // Pause the animation loop when the tab is hidden (user switched away).
-    // Resume when they come back. Avoids wasting CPU/GPU on invisible frames.
+    // Pause the animation loop when the tab is hidden
     const handleVisibilityChange = () => {
       if (document.hidden) {
         cancelAnimationFrame(animationFrameId);

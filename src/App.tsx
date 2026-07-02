@@ -1,7 +1,8 @@
-import { useState, lazy, Suspense } from 'react';
+import { useState, lazy, Suspense, useEffect, useCallback } from 'react';
 import { AnimatePresence } from 'framer-motion';
 import { Canvas } from '@react-three/fiber';
 import { View } from '@react-three/drei';
+import Lenis from 'lenis';
 import CustomCursor from './components/CustomCursor';
 import StarMapBackground from './components/StarMapBackground';
 import Hero from './components/sections/Hero';
@@ -22,6 +23,31 @@ function App() {
   const [isLoading, setIsLoading] = useState(true);
   const [isConnectModalOpen, setIsConnectModalOpen] = useState(false);
   const isMobile = useIsMobile(1023);
+
+  useEffect(() => {
+    if (isMobile) return;
+    const lenis = new Lenis({
+      lerp: 0.05, // Apple-like momentum friction (lower = longer, looser glide)
+      wheelMultiplier: 1.0, 
+      smoothWheel: true
+    });
+    
+    let rafId: number;
+    const raf = (time: number) => {
+      lenis.raf(time);
+      rafId = requestAnimationFrame(raf);
+    };
+    rafId = requestAnimationFrame(raf);
+
+    return () => {
+      cancelAnimationFrame(rafId);
+      lenis.destroy();
+    };
+  }, [isMobile]);
+
+  const handleOpenConnectModal = useCallback(() => {
+    setIsConnectModalOpen(true);
+  }, []);
 
   if (isMobile) {
     return (
@@ -60,14 +86,14 @@ function App() {
       <StarMapBackground />
       <OrbNavbar />
       <main className="main-content">
-        <Hero onOpenConnectModal={() => setIsConnectModalOpen(true)} />
+        <Hero onOpenConnectModal={handleOpenConnectModal} />
         <Suspense fallback={null}>
           <Skills />
           <Experience />
           <Projects />
         </Suspense>
       </main>
-      <Footer onOpenConnectModal={() => setIsConnectModalOpen(true)} />
+      <Footer onOpenConnectModal={handleOpenConnectModal} />
       {rootElement && (
         <Canvas
           eventSource={rootElement}

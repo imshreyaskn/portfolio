@@ -60,12 +60,6 @@ const Experience = () => {
   const [selectedMoon, setSelectedMoon] = useState<number | null>(null);
   const [isPanelActive, setIsPanelActive] = useState(false);
   const isMobile = useIsMobile();
-  const isMobileRef = useRef(false);
-
-  // ─── Mobile reference sync ────────────────────────────────────────────────
-  useEffect(() => {
-    isMobileRef.current = isMobile;
-  }, [isMobile]);
 
   // ─── Panel active state (drives border animation) ─────────────────────────
   useEffect(() => {
@@ -103,20 +97,20 @@ const Experience = () => {
 
   const spaceshipY = useTransform(smoothProgress, [0, 1], ['40vh', '-40vh']);
 
-  // X swing widened for mobile so the rocket goes around the moons without overlapping
   const spaceshipX = useTransform(smoothProgress, p => {
-    const swing = isMobileRef.current ? 80 : 120;
+    const swing = isMobile ? 80 : 120;
     return `${-swing * Math.sin(4 * Math.PI * (p - 0.125))}px`;
   });
   const spaceshipRotate = useTransform(smoothProgress, p => 40 * -Math.cos(4 * Math.PI * (p - 0.125)));
 
-  // Opacity + x for floating labels (scroll-driven)
   const opacity1 = useTransform(smoothProgress, [0.65, 0.75, 0.85], [0, 1, 0]);
-  const x1       = useTransform(smoothProgress, [0.65, 0.75, 0.85], ['-50px', '0px', '50px']);
-  const opacity2 = useTransform(smoothProgress, [0.4, 0.5, 0.6],   [0, 1, 0]);
-  const x2       = useTransform(smoothProgress, [0.4, 0.5, 0.6],   ['-50px', '0px', '50px']);
-  const opacity3 = useTransform(smoothProgress, [0.15, 0.25, 0.35],[0, 1, 0]);
-  const x3       = useTransform(smoothProgress, [0.15, 0.25, 0.35],['-50px', '0px', '50px']);
+  const transform1 = useTransform(smoothProgress, p => `translate(${isMobile ? 0 : (p - 0.75) * 500}px, ${isMobile ? 0 : '-50%'})`);
+  
+  const opacity2 = useTransform(smoothProgress, [0.4, 0.5, 0.6], [0, 1, 0]);
+  const transform2 = useTransform(smoothProgress, p => `translate(${isMobile ? 0 : (p - 0.5) * 500}px, ${isMobile ? 0 : '-50%'})`);
+  
+  const opacity3 = useTransform(smoothProgress, [0.15, 0.25, 0.35], [0, 1, 0]);
+  const transform3 = useTransform(smoothProgress, p => `translate(${isMobile ? 0 : (p - 0.25) * 500}px, ${isMobile ? 0 : '-50%'})`);
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -173,9 +167,7 @@ const Experience = () => {
                 className="experience-label right"
                 style={{
                   opacity: opacity1,
-                  // On mobile: labels sit below the moon (CSS handles position), no x drift
-                  x: isMobile ? undefined : x1,
-                  y: isMobile ? undefined : '-50%'
+                  transform: transform1
                 }}
               >
                 {EXPERIENCES[0].company}
@@ -189,8 +181,7 @@ const Experience = () => {
                 className="experience-label left"
                 style={{
                   opacity: opacity2,
-                  x: isMobile ? undefined : x2,
-                  y: isMobile ? undefined : '-50%'
+                  transform: transform2
                 }}
               >
                 {EXPERIENCES[1].company}
@@ -204,8 +195,7 @@ const Experience = () => {
                 className="experience-label right"
                 style={{
                   opacity: opacity3,
-                  x: isMobile ? undefined : x3,
-                  y: isMobile ? undefined : '-50%'
+                  transform: transform3
                 }}
               >
                 {EXPERIENCES[2].company}

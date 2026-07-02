@@ -29,68 +29,71 @@ const generateTriad = (currentTriadRef: React.MutableRefObject<{x: number, y: nu
   currentTriadRef.current = [p0, p1, p2];
 };
 
+const NODES_DATA: NavNode[] = [
+  { id: 'experience', label: 'work',     angleOffset: 0 },
+  { id: 'projects',   label: 'projects', angleOffset: Math.PI * 2 / 3 },
+  { id: 'skills',     label: 'skills',   angleOffset: Math.PI * 4 / 3 }
+];
+
 const OrbNavbar = () => {
   const [isHovered, setIsHovered] = useState(false);
   const [activeSection, setActiveSection] = useState<string | null>(null);
   const isMobile = useIsMobile();
   const isHoveredRef = useRef(false);
-  const isMobileRef = useRef(false);
   const containerRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    isMobileRef.current = isMobile;
-  }, [isMobile]);
-
   // Track the active section via IntersectionObserver
   useEffect(() => {
+    let currentActive = '';
     const observer = new IntersectionObserver(
       (entries) => {
-        // Find the most visible section
+        let maxRatio = 0;
+        let mostVisible = currentActive;
         entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            setActiveSection(entry.target.id);
+          if (entry.isIntersecting && entry.intersectionRatio > maxRatio) {
+            maxRatio = entry.intersectionRatio;
+            mostVisible = entry.target.id;
           }
         });
+        if (mostVisible && mostVisible !== currentActive) {
+          currentActive = mostVisible;
+          setActiveSection(mostVisible);
+        }
       },
-      { threshold: 0.3 } // 30% visibility is enough
+      { threshold: [0.1, 0.3, 0.5, 0.7, 0.9] }
     );
 
-    const observedElements = new Set<Element>();
-    
-    let interval: NodeJS.Timeout;
+    const sectionIds = ['home', 'skills', 'experience', 'projects', 'footer'];
+    const observedElements = new Set<string>();
+
     const checkAndObserve = () => {
-      const sectionIds = ['home', 'skills', 'experience', 'projects', 'footer'];
       let allFound = true;
       sectionIds.forEach(id => {
+        if (observedElements.has(id)) return;
         const el = document.getElementById(id);
         if (el) {
-          if (!observedElements.has(el)) {
-            observer.observe(el);
-            observedElements.add(el);
-          }
+          observer.observe(el);
+          observedElements.add(id);
         } else {
           allFound = false;
         }
       });
-      if (allFound) {
-        clearInterval(interval);
-      }
+      return allFound;
     };
-    
-    checkAndObserve();
-    interval = setInterval(checkAndObserve, 1000);
 
-    return () => {
-      clearInterval(interval);
-      observer.disconnect();
-    };
+    if (!checkAndObserve()) {
+      const mutObserver = new MutationObserver(() => {
+        if (checkAndObserve()) mutObserver.disconnect();
+      });
+      mutObserver.observe(document.body, { childList: true, subtree: true });
+      return () => {
+        mutObserver.disconnect();
+        observer.disconnect();
+      };
+    }
+
+    return () => observer.disconnect();
   }, []);
 
-  const nodesData: NavNode[] = useMemo(() => [
-    { id: 'experience', label: 'work',     angleOffset: 0 },
-    { id: 'projects',   label: 'projects', angleOffset: Math.PI * 2 / 3 },
-    { id: 'skills',     label: 'skills',   angleOffset: Math.PI * 4 / 3 }
-  ], []);
 
   const currentTriadRef = useRef([
     { x: 10, y: -10 },
@@ -105,9 +108,7 @@ const OrbNavbar = () => {
   const timeRef = useRef(0);
   const targetRotation = useRef({ x: 0, y: 0 });
   const currentRotation = useRef({ x: 0, y: 0 });
-  const lastTransforms = useRef<string[]>([]);
-  const lastOpacities = useRef<string[]>([]);
-  const lastZIndexes = useRef<string[]>([]);
+  const lastState = useRef<{t: string, o: string, z: string}[]>([]);
 
   const R = 10;
   const FL = 250;
@@ -126,7 +127,7 @@ const OrbNavbar = () => {
       currentRotation.current.x += (targetRotation.current.x - currentRotation.current.x) * 0.05;
       currentRotation.current.y += (targetRotation.current.y - currentRotation.current.y) * 0.05;
 
-      const projectedNodes = nodesData.map((node, i) => {
+      const projectedNodes = NODES_DATA.map((node, i) => {
         const angle = timeRef.current + node.angleOffset;
 
         let x = Math.cos(angle) * R;
@@ -164,17 +165,23 @@ const OrbNavbar = () => {
           const newOpacity = currentOpacity.toFixed(2);
           const newZIndex = Math.round(currentScale * 100).toString();
 
-          if (lastTransforms.current[i] !== newTransform) {
+          let state = lastState.current[i];
+          if (!state) {
+            state = { t: '', o: '', z: '' };
+            lastState.current[i] = state;
+          }
+
+          if (state.t !== newTransform) {
             orbRefs.current[i]!.style.transform = newTransform;
-            lastTransforms.current[i] = newTransform;
+            state.t = newTransform;
           }
-          if (lastOpacities.current[i] !== newOpacity) {
+          if (state.o !== newOpacity) {
             orbRefs.current[i]!.style.opacity = newOpacity;
-            lastOpacities.current[i] = newOpacity;
+            state.o = newOpacity;
           }
-          if (lastZIndexes.current[i] !== newZIndex) {
+          if (state.z !== newZIndex) {
             orbRefs.current[i]!.style.zIndex = newZIndex;
-            lastZIndexes.current[i] = newZIndex;
+            state.z = newZIndex;
           }
         }
 
@@ -207,11 +214,11 @@ const OrbNavbar = () => {
       document.removeEventListener('visibilitychange', handleVisibilityChange);
       if (animationRef.current) cancelAnimationFrame(animationRef.current); 
     };
-  }, [nodesData]);
+  }, []);
 
   // ─── Desktop mouse handlers ───────────────────────────────────────────────
   const handleMouseMove = (e: React.MouseEvent) => {
-    if (!containerRef.current || isHovered || isMobileRef.current) return;
+    if (!containerRef.current || isHovered || isMobile) return;
     const rect = containerRef.current.getBoundingClientRect();
     const x = e.clientX - rect.left - rect.width / 2;
     const y = e.clientY - rect.top - rect.height / 2;
@@ -219,14 +226,14 @@ const OrbNavbar = () => {
   };
 
   const handleMouseLeave = () => {
-    if (isMobileRef.current) return;
+    if (isMobile) return;
     targetRotation.current = { x: 0, y: 0 };
     isHoveredRef.current = false;
     setIsHovered(false);
   };
 
   const handleMouseEnter = () => {
-    if (isMobileRef.current) return;
+    if (isMobile) return;
     generateTriad(currentTriadRef);
     isHoveredRef.current = true;
     setIsHovered(true);
@@ -234,7 +241,7 @@ const OrbNavbar = () => {
 
   // ─── Mobile tap handler ───────────────────────────────────────────────────
   const handleContainerClick = () => {
-    if (!isMobileRef.current) return;
+    if (!isMobile) return;
     if (isHoveredRef.current) {
       targetRotation.current = { x: 0, y: 0 };
       isHoveredRef.current = false;
@@ -248,7 +255,7 @@ const OrbNavbar = () => {
 
   // Called by Orb when its link is tapped (mobile only — collapses nav after scroll)
   const handleOrbClick = () => {
-    if (!isMobileRef.current) return;
+    if (!isMobile) return;
     targetRotation.current = { x: 0, y: 0 };
     isHoveredRef.current = false;
     setIsHovered(false);
@@ -276,7 +283,7 @@ const OrbNavbar = () => {
           </g>
         </svg>
 
-        {nodesData.map((node, i) => (
+        {NODES_DATA.map((node, i) => (
           <Orb
             key={node.id}
             node={node}
@@ -335,19 +342,39 @@ const Orb = React.forwardRef<
   HTMLDivElement,
   { node: NavNode; isExpanded: boolean; isMobile: boolean; onOrbClick: () => void }
 >(({ node, isExpanded, isMobile, onOrbClick }, ref) => {
-  const [isOrbHovered, setIsOrbHovered] = useState(false);
+  const dotRef = useRef<HTMLDivElement>(null);
+  const labelRef = useRef<HTMLDivElement>(null);
 
-  // Desktop: label on orb hover. Mobile: label always when nav is expanded.
-  const showLabel = isExpanded && (isMobile || isOrbHovered);
+  const handleEnter = () => {
+    if (!isMobile && isExpanded) {
+      dotRef.current?.classList.add('hovered');
+      labelRef.current?.classList.add('visible');
+    }
+  };
+
+  const handleLeave = () => {
+    if (!isMobile) {
+      dotRef.current?.classList.remove('hovered');
+      labelRef.current?.classList.remove('visible');
+    }
+  };
+
+  useEffect(() => {
+    if (isExpanded && isMobile) {
+      labelRef.current?.classList.add('visible');
+    } else if (!isMobile) {
+      labelRef.current?.classList.remove('visible');
+      dotRef.current?.classList.remove('hovered');
+    }
+  }, [isExpanded, isMobile]);
 
   return (
     <div
       ref={ref}
-      onMouseEnter={() => { if (!isMobile) setIsOrbHovered(true); }}
-      onMouseLeave={() => { if (!isMobile) setIsOrbHovered(false); }}
+      onMouseEnter={handleEnter}
+      onMouseLeave={handleLeave}
       className="orb-node-container"
     >
-      {/* Invisible hit area — only active when expanded */}
       <a
         href={`#${node.id}`}
         className={`orb-hit-area ${isExpanded ? 'expanded' : 'collapsed'}`}
@@ -356,31 +383,16 @@ const Orb = React.forwardRef<
           e.stopPropagation(); 
           onOrbClick(); 
           
-          // Force manual scroll for Mac Chrome / Safari compatibility
           const target = document.getElementById(node.id);
           if (target) {
             target.scrollIntoView({ behavior: 'smooth' });
           }
         }}
       />
-
-      {/* Glowing dot */}
-      <div className={`orb-glow-dot ${isExpanded && isOrbHovered ? 'hovered' : ''}`} />
-
-      {/* Label */}
-      <AnimatePresence>
-        {showLabel && (
-          <motion.div
-            initial={{ opacity: 0, x: 10, y: -10 }}
-            animate={{ opacity: 1, x: 20, y: -10 }}
-            exit={{ opacity: 0, x: 10, y: -10 }}
-            transition={{ duration: 0.2 }}
-            className="orb-label"
-          >
-            {node.label}
-          </motion.div>
-        )}
-      </AnimatePresence>
+      <div ref={dotRef} className="orb-glow-dot" />
+      <div ref={labelRef} className="orb-label-static">
+        {node.label}
+      </div>
     </div>
   );
 });
