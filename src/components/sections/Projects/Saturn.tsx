@@ -1,6 +1,6 @@
 import { useRef, useMemo } from 'react';
 import { useFrame } from '@react-three/fiber';
-import { DoubleSide, BackSide, BufferGeometry, Float32BufferAttribute, ShaderMaterial, PointsMaterial } from 'three';
+import { DoubleSide, BackSide, BufferGeometry, Float32BufferAttribute, ShaderMaterial, PointsMaterial, Group } from 'three';
 import { PresentationControls, Html } from '@react-three/drei';
 
 // ─── Particle ring helpers ────────────────────────────────────────────────────
@@ -89,8 +89,14 @@ const SWEEP_FRAGMENT = /* glsl */`
 
 // ─── Saturn ────────────────────────────────────────────────────────────────────
 
+const RING_DATA = [
+  { inner: 1.40, outer: 2.50, count: 1200, opacity: 0.40, size: 0.016 },
+  { inner: 2.60, outer: 3.40, count: 800, opacity: 0.15, size: 0.014 },
+  { inner: 3.50, outer: 4.30, count: 1000, opacity: 0.50, size: 0.018 },
+];
+
 const Saturn = () => {
-  const ringsRef       = useRef<any>(null);
+  const ringsRef       = useRef<Group>(null);
   const outlineMatRef  = useRef<ShaderMaterial>(null);
 
   const outlineUniforms = useMemo(() => ({ uTime: { value: 0 } }), []);
@@ -105,12 +111,6 @@ const Saturn = () => {
       outlineMatRef.current.uniforms.uTime.value = clock.elapsedTime;
     }
   });
-
-  const ringData = [
-    { inner: 1.40, outer: 2.50, count: 1200, opacity: 0.40, size: 0.016 },
-    { inner: 2.60, outer: 3.40, count: 800, opacity: 0.15, size: 0.014 },
-    { inner: 3.50, outer: 4.30, count: 1000, opacity: 0.50, size: 0.018 },
-  ];
 
   return (
     <group rotation={[0.2, 0, 0]} scale={0.35}>
@@ -154,7 +154,7 @@ const Saturn = () => {
 
         {/* Particle ring cluster */}
         <group ref={ringsRef} rotation={[Math.PI / 2 + 0.15, 0, 0]}>
-          {ringData.map((ring, i) => (
+          {RING_DATA.map((ring, i) => (
             <RingParticles
               key={i}
               innerR={ring.inner}

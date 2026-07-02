@@ -1,23 +1,23 @@
 import { motion } from 'framer-motion';
 import './Hero.css';
 
-const Hero = ({ onOpenConnectModal }: { onOpenConnectModal: () => void }) => {
-  // Staggered animation variants for premium reveal
-  const container = {
-    hidden: { opacity: 0 },
-    show: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.15,
-        delayChildren: 0.3,
-      }
+const CONTAINER_VARIANTS = {
+  hidden: { opacity: 0 },
+  show: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.15,
+      delayChildren: 0.3,
     }
-  };
+  }
+};
 
-  const item = {
-    hidden: { opacity: 0, y: 30, filter: 'blur(8px)' },
-    show: { opacity: 1, y: 0, filter: 'blur(0px)', transition: { duration: 1.2, ease: [0.16, 1, 0.3, 1] as [number, number, number, number] } }
-  };
+const ITEM_VARIANTS = {
+  hidden: { opacity: 0, y: 30, filter: 'blur(8px)' },
+  show: { opacity: 1, y: 0, filter: 'blur(0px)', transition: { duration: 1.2, ease: [0.16, 1, 0.3, 1] as [number, number, number, number] } }
+};
+
+const Hero = ({ onOpenConnectModal }: { onOpenConnectModal: () => void }) => {
 
   return (
     <section id="home" className="hero-section">
@@ -36,7 +36,7 @@ const Hero = ({ onOpenConnectModal }: { onOpenConnectModal: () => void }) => {
           className="hero-image"
           width={810}
           height={1080}
-          fetchpriority="high"
+          fetchPriority="high"
           decoding="async"
         />
       </motion.div>
@@ -45,25 +45,25 @@ const Hero = ({ onOpenConnectModal }: { onOpenConnectModal: () => void }) => {
         
         {/* Left Content */}
         <motion.div 
-          variants={container}
+          variants={CONTAINER_VARIANTS}
           initial="hidden"
           animate="show"
           className="hero-content"
         >
           
-          <motion.div variants={item} style={{ marginBottom: '4px' }}>
+          <motion.div variants={ITEM_VARIANTS} style={{ marginBottom: '4px' }}>
             <span className="hero-pretitle silver-glow-text">
               私は
             </span>
           </motion.div>
           
-          <motion.div variants={item} className="hero-title-wrapper">
+          <motion.div variants={ITEM_VARIANTS} className="hero-title-wrapper">
             <h1 className="hero-title">
               shreyas
             </h1>
           </motion.div>
 
-          <motion.div variants={item} className="hero-desc-wrapper">
+          <motion.div variants={ITEM_VARIANTS} className="hero-desc-wrapper">
             <p className="hero-desc">
               a computer science student building ai agents, llm security tools, and automation systems.<br/>
               <span className="silver-glow-text">at your service.</span>
@@ -71,7 +71,7 @@ const Hero = ({ onOpenConnectModal }: { onOpenConnectModal: () => void }) => {
           </motion.div>
 
           {/* Detached CTA Component */}
-          <motion.div variants={item} className="hero-cta-wrapper">
+          <motion.div variants={ITEM_VARIANTS} className="hero-cta-wrapper">
             <motion.button 
               onClick={onOpenConnectModal}
               whileHover={{ scale: 1.02 }}
