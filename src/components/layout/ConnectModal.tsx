@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import './ConnectModal.css';
 
@@ -16,29 +16,12 @@ const ConnectModal: React.FC<ConnectModalProps> = ({ isOpen, onClose }) => {
   const [isSuccess, setIsSuccess] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
 
-  const hasInputRef = useRef(false);
-
   useEffect(() => {
-    hasInputRef.current = name.length > 0 || fromEmail.length > 0 || body.length > 0;
-  }, [name, fromEmail, body]);
-
-  useEffect(() => {
-    if (!isOpen) {
-      const timer = setTimeout(() => {
-        setName('');
-        setFromEmail('');
-        setBody('');
-        setBotcheck('');
-        setIsSuccess(false);
-        setIsSubmitting(false);
-        setErrorMsg('');
-      }, 500);
-      return () => clearTimeout(timer);
-    }
+    if (!isOpen) return;
 
     // Close the modal when the window scrolls, ONLY if the user hasn't typed anything
     const handleScroll = () => {
-      if (!hasInputRef.current) {
+      if (name.length === 0 && fromEmail.length === 0 && body.length === 0) {
         onClose();
       }
     };
@@ -56,6 +39,7 @@ const ConnectModal: React.FC<ConnectModalProps> = ({ isOpen, onClose }) => {
       setIsSuccess(true);
       setTimeout(() => {
         onClose();
+        setIsSuccess(false);
       }, 2000);
       return;
     }
@@ -69,7 +53,7 @@ const ConnectModal: React.FC<ConnectModalProps> = ({ isOpen, onClose }) => {
     setErrorMsg('');
 
     try {
-      const accessKey = import.meta.env.VITE_WEB3FORMS_KEY || "3be71592-ae80-4ac0-bf6c-b4682d1b1d4f";
+      const accessKey = "3be71592-ae80-4ac0-bf6c-b4682d1b1d4f";
 
       const response = await fetch("https://api.web3forms.com/submit", {
         method: "POST",
@@ -92,6 +76,12 @@ const ConnectModal: React.FC<ConnectModalProps> = ({ isOpen, onClose }) => {
         setIsSuccess(true);
         setTimeout(() => {
           onClose();
+          setTimeout(() => {
+            setName('');
+            setFromEmail('');
+            setBody('');
+            setIsSuccess(false);
+          }, 500);
         }, 2000);
       } else {
         throw new Error(result.message || "Failed to send email");

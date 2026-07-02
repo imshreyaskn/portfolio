@@ -106,7 +106,7 @@ a, button, [role="button"], input, select, textarea, label {
 }
 
 html { 
-
+  scroll-behavior: smooth; 
   background-color: var(--bg-void);
   color: var(--text-primary);
   overscroll-behavior: none;

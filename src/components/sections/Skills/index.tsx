@@ -122,7 +122,7 @@ const Skills = () => {
     setSelectedIndex((prev) => (prev === index ? null : index));
   }, []);
 
-  const closeDetails = useCallback(() => setSelectedIndex(null), []);
+  const closeDetails = () => setSelectedIndex(null);
 
   const isRightSide = selectedIndex !== null ? SKILLS_DATA[selectedIndex].side === 'right' : false;
 

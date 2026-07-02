@@ -16,9 +16,6 @@ export default defineConfig({
           if (id.includes('framer-motion')) {
             return 'framer';
           }
-          if (id.includes('lenis')) {
-            return 'lenis';
-          }
         }
       }
     }

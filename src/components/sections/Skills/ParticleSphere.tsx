@@ -59,107 +59,95 @@ const ParticleSphere = memo(({ count = 300, radius = 0.5, onSelect, portalRef }:
   }, []);
 
   // Pre-allocate math objects to avoid garbage collection stutters at 60fps
-  const mathRefs = useRef<{tempVec: Vector3, particleBase: Vector3, closestPoint: Vector3, localRay: Ray, invMatrix: Matrix4} | null>(null);
-  if (!mathRefs.current) {
-    mathRefs.current = {
-      tempVec: new Vector3(),
-      particleBase: new Vector3(),
-      closestPoint: new Vector3(),
-      localRay: new Ray(),
-      invMatrix: new Matrix4()
-    };
-  }
-  const { tempVec, particleBase, closestPoint, localRay, invMatrix } = mathRefs.current;
+  const tempVec = useMemo(() => new Vector3(), []);
+  const particleBase = useMemo(() => new Vector3(), []);
+  const closestPoint = useMemo(() => new Vector3(), []);
+  const localRay = useMemo(() => new Ray(), []);
+  const invMatrix = useMemo(() => new Matrix4(), []);
 
-  const ringMaterialRef = useRef<ShaderMaterial | null>(null);
-  if (!ringMaterialRef.current) {
-    ringMaterialRef.current = new ShaderMaterial({
-      transparent: true,
-      depthWrite: false,
-      side: DoubleSide,
-      uniforms: {
-        uTime: { value: 0 },
-        uMorph: { value: 0 },
-        uRadius: { value: radius },
-        uColor: { value: new Color(0x7A7A8C) },
-        uHighlightColor: { value: new Color(0xFFFFFF) } 
-      },
-      vertexShader: `
-        uniform float uMorph;
-        uniform float uRadius;
-        varying vec3 vWorldPos;
-        void main() {
-          float PI = 3.141592653589793;
-          float sliceAngle = (PI * 2.0) / float(${SKILLS_DATA.length});
-          float midAngle = sliceAngle / 2.0;
-          float maxDist = sliceAngle / 2.0;
-  
-          float bx = position.x;
-          float by = position.y;
-  
-          float angleBase = atan(by, bx);
-          float rBase = length(vec2(bx, by));
-  
-          float angleDist = angleBase - midAngle;
-          float targetAngle = midAngle + (angleDist * 0.15);
-          float currentAngle = mix(angleBase, targetAngle, uMorph);
-  
-          float distNorm = abs(angleBase - midAngle) / maxDist;
-  
-          float pushOut = 0.02;
-          float pullIn = 0.08;
-  
-          float thicknessBoost = 0.0;
-          if (rBase > (uRadius + 0.252)) {
-            thicknessBoost = 0.006;
-          }
-  
-          float arrowR = rBase + thicknessBoost + pushOut - ((pushOut + pullIn) * distNorm);
-          float currentR = mix(rBase, arrowR, uMorph);
-  
-          vec3 deformed = vec3(
-            cos(currentAngle) * currentR,
-            sin(currentAngle) * currentR,
-            position.z
-          );
-  
-          vec4 worldPosition = modelMatrix * vec4(deformed, 1.0);
-          vWorldPos = worldPosition.xyz;
-          gl_Position = projectionMatrix * viewMatrix * worldPosition;
+  const ringMaterialRef = useRef(new ShaderMaterial({
+    transparent: true,
+    depthWrite: false,
+    side: DoubleSide,
+    uniforms: {
+      uTime: { value: 0 },
+      uMorph: { value: 0 },
+      uRadius: { value: radius },
+      uColor: { value: new Color(0x7A7A8C) }, // Exact var(--text-secondary) color
+      uHighlightColor: { value: new Color(0xFFFFFF) } 
+    },
+    vertexShader: `
+      uniform float uMorph;
+      uniform float uRadius;
+      varying vec3 vWorldPos;
+      void main() {
+        float PI = 3.141592653589793;
+        float sliceAngle = (PI * 2.0) / float(${SKILLS_DATA.length});
+        float midAngle = sliceAngle / 2.0;
+        float maxDist = sliceAngle / 2.0;
+
+        float bx = position.x;
+        float by = position.y;
+
+        float angleBase = atan(by, bx);
+        float rBase = length(vec2(bx, by));
+
+        float angleDist = angleBase - midAngle;
+        float targetAngle = midAngle + (angleDist * 0.15);
+        float currentAngle = mix(angleBase, targetAngle, uMorph);
+
+        float distNorm = abs(angleBase - midAngle) / maxDist;
+
+        float pushOut = 0.02;
+        float pullIn = 0.08;
+
+        float thicknessBoost = 0.0;
+        if (rBase > (uRadius + 0.252)) {
+          thicknessBoost = 0.006;
         }
-      `,
-      fragmentShader: `
-        uniform float uTime;
-        uniform float uMorph;
-        uniform vec3 uColor;
-        uniform vec3 uHighlightColor;
-        varying vec3 vWorldPos;
-  
-        void main() {
-          float sweep = fract((uTime * 0.2) - (vWorldPos.x * 0.3));
-          float shine = smoothstep(0.3, 0.5, sweep) * smoothstep(0.7, 0.5, sweep);
-          vec3 finalColor = mix(uColor, uHighlightColor, shine);
-          finalColor = mix(finalColor, uHighlightColor, uMorph);
-          float idleOpacity = 0.5 + (shine * 0.5);
-          float finalOpacity = mix(idleOpacity, 1.0, uMorph);
-          gl_FragColor = vec4(finalColor, finalOpacity);
-        }
-      `
-    });
-  }
+
+        float arrowR = rBase + thicknessBoost + pushOut - ((pushOut + pullIn) * distNorm);
+        float currentR = mix(rBase, arrowR, uMorph);
+
+        vec3 deformed = vec3(
+          cos(currentAngle) * currentR,
+          sin(currentAngle) * currentR,
+          position.z
+        );
+
+        vec4 worldPosition = modelMatrix * vec4(deformed, 1.0);
+        vWorldPos = worldPosition.xyz;
+        gl_Position = projectionMatrix * viewMatrix * worldPosition;
+      }
+    `,
+    fragmentShader: `
+      uniform float uTime;
+      uniform float uMorph;
+      uniform vec3 uColor;
+      uniform vec3 uHighlightColor;
+      varying vec3 vWorldPos;
+
+      void main() {
+        float sweep = fract((uTime * 0.2) - (vWorldPos.x * 0.3));
+        float shine = smoothstep(0.3, 0.5, sweep) * smoothstep(0.7, 0.5, sweep);
+        vec3 finalColor = mix(uColor, uHighlightColor, shine);
+        finalColor = mix(finalColor, uHighlightColor, uMorph);
+        float idleOpacity = 0.5 + (shine * 0.5); // Much more solid to match text
+        float finalOpacity = mix(idleOpacity, 1.0, uMorph);
+        gl_FragColor = vec4(finalColor, finalOpacity);
+      }
+    `
+  }));
 
   // Shared geometry for the ring segments based on data length
-  const ringGeoRef = useRef<RingGeometry | null>(null);
-  if (!ringGeoRef.current) {
-    ringGeoRef.current = new RingGeometry(radius + 0.25, radius + 0.254, 32, 1, 0, (Math.PI * 2) / SKILLS_DATA.length);
-  }
+  const ringGeoRef = useRef(new RingGeometry(radius + 0.25, radius + 0.254, 32, 1, 0, (Math.PI * 2) / SKILLS_DATA.length));
 
   useEffect(() => {
     const mat = ringMaterialRef.current;
     const geo = ringGeoRef.current;
     return () => {
-      if (mat) mat.dispose();
-      if (geo) geo.dispose();
+      mat.dispose();
+      geo.dispose();
     };
   }, []);
 
@@ -334,12 +322,10 @@ const ParticleSphere = memo(({ count = 300, radius = 0.5, onSelect, portalRef }:
       const morph = ringGroupRef.current.userData.morphFactor;
 
       // Always update uTime so the idle gradient animation keeps playing
-      if (ringMaterialRef.current) {
-        ringMaterialRef.current.uniforms.uTime.value = state.clock.elapsedTime;
-      }
+      ringMaterialRef.current.uniforms.uTime.value = state.clock.elapsedTime;
 
       // Only update uniforms & DOM styles if morph factor is moving or active
-      if ((morph !== prevMorph || morph > 0) && ringMaterialRef.current) {
+      if (morph !== prevMorph || morph > 0) {
         ringMaterialRef.current.uniforms.uMorph.value = morph;
         textRefs.current.forEach((txt) => {
           if (!txt) return;
@@ -422,9 +408,7 @@ const ParticleSphere = memo(({ count = 300, radius = 0.5, onSelect, portalRef }:
 
           return (
               <group key={i} ref={(el) => { arcRefs.current[i] = el; }}>
-                {ringMaterialRef.current && ringGeoRef.current && (
-                  <mesh rotation={[0, 0, rotation]} material={ringMaterialRef.current} geometry={ringGeoRef.current} />
-                )}
+                <mesh rotation={[0, 0, rotation]} material={ringMaterialRef.current} geometry={ringGeoRef.current} />
                 <Html
                   position={[textX, textY, 0]}
                   center
