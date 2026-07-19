@@ -1,5 +1,5 @@
-import { useState, useMemo } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { useState, useMemo, useRef } from 'react';
+import { motion, AnimatePresence, useInView } from 'framer-motion';
 import { View, PerspectiveCamera, Html } from '@react-three/drei';
 import { useIsMobile } from '../../../hooks/useIsMobile';
 import Saturn from './Saturn';
@@ -18,6 +18,8 @@ const Projects = () => {
   const [hoveredPlanet, setHoveredPlanet] = useState<string | null>(null);
   const particles = useMemo(() => generateParticles(), []);
   const isMobile = useIsMobile();
+  const sectionRef = useRef<HTMLElement>(null);
+  const inView = useInView(sectionRef);
 
   // Toggle for mobile tap — tapping the same planet again dismisses the label
   const handlePlanetTap = (name: string) => {
@@ -25,13 +27,13 @@ const Projects = () => {
   };
 
   return (
-    <section id="projects" className="projects-section">
+    <section id="projects" className="projects-section" ref={sectionRef}>
       {/* 3D Canvas */}
       <div className="projects-canvas-wrapper">
         <View className="projects-canvas-view">
           <PerspectiveCamera makeDefault position={[0, 0, 8]} fov={45} />
           <group position={[0, 1.5, 0]}>
-            <Saturn />
+            <Saturn isPaused={!inView} />
             <Html center position={[0, -0.05, 0]} zIndexRange={[10, 20]}>
               <div style={{ position: 'relative', width: 0, height: 0, pointerEvents: 'none' }}>
                 {/* 2D Hanging Threads Overlay */}

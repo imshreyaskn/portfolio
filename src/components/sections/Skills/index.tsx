@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect, useRef, useMemo } from 'react';
 import { OrbitControls, View, PerspectiveCamera } from '@react-three/drei';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, useInView } from 'framer-motion';
 import { SKILLS_DATA, SkillItem } from './data';
 import ParticleSphere from './ParticleSphere';
 import { useIsMobile } from '../../../hooks/useIsMobile';
@@ -10,6 +10,14 @@ const ConstellationGraph = ({ skills, isMobile }: { skills: SkillItem[]; isMobil
   const containerRef = useRef<HTMLDivElement>(null);
   const pathsRef = useRef<(SVGPathElement | null)[]>([]);
   const chipsRef = useRef<(HTMLDivElement | null)[]>([]);
+
+  const dxRef = useRef<Float32Array>(new Float32Array(0));
+  const dyRef = useRef<Float32Array>(new Float32Array(0));
+
+  useEffect(() => {
+    dxRef.current = new Float32Array(skills.length);
+    dyRef.current = new Float32Array(skills.length);
+  }, [skills]);
 
   // Compute initial edges based on distance
   const edges = useMemo(() => {
@@ -28,33 +36,26 @@ const ConstellationGraph = ({ skills, isMobile }: { skills: SkillItem[]; isMobil
     let frameId: number;
     const animate = () => {
       const time = performance.now() * 0.001;
-      
-      const nodes = skills.map((skill, i) => {
-        const driftY = Math.sin(time * 0.4 + i * 2.5) * 2.5; // ~10px drift
-        const driftX = Math.cos(time * 0.3 + i * 1.8) * 1.5; // ~6px drift
-        return {
-          x: skill.x + driftX,
-          y: skill.y + driftY
-        };
-      });
+      const dx = dxRef.current;
+      const dy = dyRef.current;
 
-      // Sync DOM Chips
-      chipsRef.current.forEach((chip, i) => {
-        if (chip) {
-          chip.style.left = `${nodes[i].x}%`;
-          chip.style.top = `${nodes[i].y}%`;
-        }
-      });
+      for (let i = 0; i < skills.length; i++) {
+        dy[i] = Math.sin(time * 0.4 + i * 2.5) * 8;
+        dx[i] = Math.cos(time * 0.3 + i * 1.8) * 8;
+        const chip = chipsRef.current[i];
+        if (chip) chip.style.transform = `translate(calc(-50% + ${dx[i]}px), calc(-50% + ${dy[i]}px))`;
+      }
 
-      // Sync SVG Paths
-      edges.forEach((edge, idx) => {
-        const start = nodes[edge[0]];
-        const end = nodes[edge[1]];
+      for (let idx = 0; idx < edges.length; idx++) {
+        const [a, b] = edges[idx];
         const pathEl = pathsRef.current[idx];
-        if (pathEl) {
-          pathEl.setAttribute('d', `M ${start.x} ${start.y} L ${end.x} ${end.y}`);
-        }
-      });
+        if (!pathEl) continue;
+        const sX = skills[a].x + dx[a] / 4;
+        const sY = skills[a].y + dy[a] / 4;
+        const eX = skills[b].x + dx[b] / 4;
+        const eY = skills[b].y + dy[b] / 4;
+        pathEl.setAttribute('d', `M ${sX} ${sY} L ${eX} ${eY}`);
+      }
 
       frameId = requestAnimationFrame(animate);
     };
@@ -117,6 +118,10 @@ const Skills = () => {
   const isMobile = useIsMobile();
   const isNonDesktop = useIsMobile(1023);
   const viewRef = useRef<HTMLDivElement>(null);
+  const sectionRef = useRef<HTMLElement>(null);
+  const inView = useInView(sectionRef);
+
+  const isPaused = !inView || (isMobile && selectedIndex !== null);
 
   const handleSelect = useCallback((index: number) => {
     setSelectedIndex((prev) => (prev === index ? null : index));
@@ -143,12 +148,14 @@ const Skills = () => {
     ? (isRightSide ? '100vw' : '-100vw')
     : (isRightSide ? '50vw' : '-50vw');
 
-  const spotlightX = selectedIndex === null ? '50%' : (isRightSide ? '25%' : '75%');
+  // Translate the 200vw wide overlay to move the static mask
+  const overlayShift = selectedIndex === null ? '0vw' : (isRightSide ? '-25vw' : '25vw');
 
   return (
     <section
       id="skills"
       className="skills-section"
+      ref={sectionRef}
     >
       {/* Global Animated Gradient for Icons */}
       <svg width="0" height="0" style={{ position: 'absolute' }}>
@@ -164,12 +171,9 @@ const Skills = () => {
         </defs>
       </svg>
 
-      {/* Frosty glassmorphism overlay with dynamic spotlight */}
+      {/* Frosty glassmorphism overlay with hardware-accelerated spotlight shift */}
       <motion.div
-        animate={{
-          WebkitMaskImage: `radial-gradient(circle at ${spotlightX} 50%, transparent 5%, black 45%), linear-gradient(to bottom, transparent 0%, black 20%, black 80%, transparent 100%)`,
-          maskImage: `radial-gradient(circle at ${spotlightX} 50%, transparent 5%, black 45%), linear-gradient(to bottom, transparent 0%, black 20%, black 80%, transparent 100%)`
-        } as any}
+        animate={{ x: overlayShift }}
         transition={{ type: 'spring', damping: 25, stiffness: 120 }}
         className="skills-glass-overlay"
       />
@@ -242,7 +246,7 @@ const Skills = () => {
             />
           )}
           <group scale={isMobile ? 0.5 : (isNonDesktop ? 0.65 : 1)}>
-            <ParticleSphere count={300} radius={0.5} onSelect={handleSelect} portalRef={viewRef} />
+            <ParticleSphere count={300} radius={0.5} onSelect={handleSelect} portalRef={viewRef} isPaused={isPaused} />
           </group>
         </View>
       </motion.div>

@@ -11,16 +11,23 @@
 .skills-glass-overlay {
   position: absolute;
   top: 0;
-  left: 0;
-  width: 100%;
+  left: -50vw;
+  width: 200vw;
   height: 100%;
   background: rgba(0, 0, 0, 0.85);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
+  
+  /* 100vw is the center of the 200vw element. 5vw matches 5% of viewport */
+  -webkit-mask-image: radial-gradient(circle at 100vw 50%, transparent 5vw, black 45vw), linear-gradient(to bottom, transparent 0%, black 20%, black 80%, transparent 100%);
+  mask-image: radial-gradient(circle at 100vw 50%, transparent 5vw, black 45vw), linear-gradient(to bottom, transparent 0%, black 20%, black 80%, transparent 100%);
   -webkit-mask-composite: source-in;
   mask-composite: intersect;
+  
   z-index: 0;
   pointer-events: none;
+  will-change: transform;
+  contain: layout paint;
 }
 
 .skills-details-pane {

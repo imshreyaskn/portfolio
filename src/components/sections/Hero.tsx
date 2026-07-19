@@ -20,15 +20,16 @@ const Hero = ({ onOpenConnectModal }: { onOpenConnectModal: () => void }) => {
   };
 
   return (
-    <section id="home" className="hero-section">
+    <motion.section 
+      id="home" 
+      className="hero-section"
+      initial={{ scale: 0.95, opacity: 0, filter: 'blur(10px)' }}
+      animate={{ scale: 1, opacity: 1, filter: 'blur(0px)' }}
+      transition={{ duration: 1.5, ease: [0.16, 1, 0.3, 1] }}
+    >
       
       {/* Right Image (Absolute to touch the right screen edge) */}
-      <motion.div
-        initial={{ opacity: 0, filter: 'blur(10px)', x: 50 }}
-        animate={{ opacity: 1, filter: 'blur(0px)', x: 0 }}
-        transition={{ duration: 1.5, delay: 0.2, ease: [0.16, 1, 0.3, 1] as [number, number, number, number] }}
-        className="hero-image-wrapper"
-      >
+      <div className="hero-image-wrapper">
         <img
           src="/hero-figure.webp"
           alt="Artistic 3D rendering of Shreyas"
@@ -39,7 +40,7 @@ const Hero = ({ onOpenConnectModal }: { onOpenConnectModal: () => void }) => {
           fetchpriority="high"
           decoding="async"
         />
-      </motion.div>
+      </div>
 
       <div className="container hero-content-wrapper">
         
@@ -84,7 +85,7 @@ const Hero = ({ onOpenConnectModal }: { onOpenConnectModal: () => void }) => {
 
         </motion.div>
       </div>
-    </section>
+    </motion.section>
   );
 };
 

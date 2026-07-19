@@ -58,6 +58,8 @@
 
   /* ─── FLUID DISPLAY ───────────────────────────────────── */
   --fs-display:   clamp(52px, 7.5vw, 96px);
+  
+  --shimmer-duration: 6s;
   --fs-h1:        clamp(36px, 5vw, 60px);
   --fs-h2:        clamp(26px, 3.2vw, 38px);
   --fs-h3:        clamp(19px, 2.2vw, 26px);
@@ -191,7 +193,7 @@ h3       { font-size: var(--fs-h3); letter-spacing: -0.01em; line-height: 1.25; 
   color: transparent;
   -webkit-background-clip: text;
   background-clip: text;
-  animation: textShine 5s linear infinite;
+  animation: textShine var(--shimmer-duration) linear infinite;
   display: inline-block;
   /* Hint the browser to promote this element to its own compositor layer.
      background-position is not GPU-composited by default; will-change allows

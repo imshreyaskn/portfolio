@@ -6,6 +6,8 @@
   background-color: transparent;
   overflow: hidden;
   scroll-snap-align: start;
+  content-visibility: auto;
+  contain-intrinsic-size: 100vh;
 }
 
 .projects-canvas-wrapper {
@@ -71,7 +73,7 @@
 .saturn-glow {
   width: 280px;
   height: 280px;
-  background: radial-gradient(circle, rgba(255, 255, 255, 0.12) 0%, rgba(255, 255, 255, 0) 70%);
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.2) 0%, rgba(255, 255, 255, 0) 70%);
   border-radius: 50%;
   pointer-events: none;
   animation: saturn-pulse 4s ease-in-out infinite;

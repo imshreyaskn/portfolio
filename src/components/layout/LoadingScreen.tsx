@@ -21,6 +21,7 @@ const LoadingScreen = ({ onComplete }: LoadingScreenProps) => {
       await new Promise(resolve => setTimeout(resolve, 2600));
       
       // 3. Implosion effect
+      window.dispatchEvent(new CustomEvent('implosion-start'));
       await controls.start('implode');
       
       // 4. Trigger unmount
