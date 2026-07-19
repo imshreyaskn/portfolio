@@ -1,4 +1,4 @@
-import { useState, lazy, Suspense } from 'react';
+import { useState, useEffect, lazy, Suspense } from 'react';
 import { AnimatePresence } from 'framer-motion';
 import { Canvas } from '@react-three/fiber';
 import { View } from '@react-three/drei';
@@ -20,8 +20,20 @@ const rootElement = document.getElementById('root');
 
 function App() {
   const [isLoading, setIsLoading] = useState(true);
+  const [isFullyLoaded, setIsFullyLoaded] = useState(false);
   const [isConnectModalOpen, setIsConnectModalOpen] = useState(false);
   const isMobile = useIsMobile(1023);
+
+  // Mount the heavy WebGL components 0.5s before the 1.2s exit animation finishes (at 700ms)
+  // This hides the WebGL shader compilation freeze behind the fade-out, preventing a delay on scroll.
+  useEffect(() => {
+    if (!isLoading) {
+      const timer = setTimeout(() => {
+        setIsFullyLoaded(true);
+      }, 700);
+      return () => clearTimeout(timer);
+    }
+  }, [isLoading]);
 
   if (isMobile) {
     return (
@@ -61,14 +73,16 @@ function App() {
       <OrbNavbar />
       <main className="main-content">
         <Hero onOpenConnectModal={() => setIsConnectModalOpen(true)} />
-        <Suspense fallback={null}>
-          <Skills />
-          <Experience />
-          <Projects />
-        </Suspense>
+        {isFullyLoaded && (
+          <Suspense fallback={null}>
+            <Skills />
+            <Experience />
+            <Projects />
+          </Suspense>
+        )}
       </main>
       <Footer onOpenConnectModal={() => setIsConnectModalOpen(true)} />
-      {rootElement && (
+      {rootElement && isFullyLoaded && (
         <Canvas
           eventSource={rootElement}
           gl={{ antialias: false, powerPreference: 'high-performance' }}

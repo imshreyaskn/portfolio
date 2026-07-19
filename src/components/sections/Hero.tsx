@@ -37,7 +37,7 @@ const Hero = ({ onOpenConnectModal }: { onOpenConnectModal: () => void }) => {
           className="hero-image"
           width={810}
           height={1080}
-          fetchpriority="high"
+          fetchPriority="high"
           decoding="async"
         />
       </div>
