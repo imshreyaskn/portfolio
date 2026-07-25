@@ -141,8 +141,8 @@
 }
 
 .section-tooltip-icon {
-  width: 2.2em; /* Scales proportionally with the tooltip font-size */
-  height: 2.2em;
+  width: 1.7em; /* Scales proportionally with the tooltip font-size */
+  height: 1.7em;
   opacity: 0.9;
   object-fit: contain;
   filter: drop-shadow(0 0 6px rgba(255, 255, 255, 0.8));
