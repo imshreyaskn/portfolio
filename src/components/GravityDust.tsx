@@ -91,14 +91,20 @@ const GravityDust = ({ active }: { active: boolean }) => {
       clearedWhileIdle = false;
       ctx.clearRect(0, 0, cssW, cssH);
 
+      // Dynamically compute the exact screen-space center of the black hole
+      // using camera frustum projection — matches useBlackHoleLayout() on all aspect ratios.
+      const rect = canvas.getBoundingClientRect();
+      const aspect = window.innerWidth / window.innerHeight;
+      const posY = aspect >= 1.5 ? 1.0 : 1.4;
+      const worldHeight = 2 * Math.tan((45 * Math.PI) / 360) * 8; // frustum height at camera z=8, fov=45
       const singX = cssW * 0.5;
-      const singY = cssH * 0.35;
+      const singY = cssH * (0.5 - posY / worldHeight);
 
       // Time-based spawning (frame-rate independent) at the shared cursor position.
       if (activeRef.current && cursorPosition.active) {
         spawnAccumulator += dt * SPAWN_PER_SECOND;
-        const cx = cursorPosition.x - rectLeft;
-        const cy = cursorPosition.y - rectTop;
+        const cx = cursorPosition.x - rect.left;
+        const cy = cursorPosition.y - rect.top;
         while (spawnAccumulator >= 1 && particles.length < MAX_PARTICLES) {
           spawnAccumulator -= 1;
           particles.push({
