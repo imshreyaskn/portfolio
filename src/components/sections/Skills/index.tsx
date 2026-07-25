@@ -1,5 +1,6 @@
 import { useState, useCallback, useEffect, useRef, useMemo, memo } from 'react';
-import { OrbitControls, View, PerspectiveCamera } from '@react-three/drei';
+import { Canvas } from '@react-three/fiber';
+import { OrbitControls, PerspectiveCamera } from '@react-three/drei';
 import { motion, AnimatePresence, useInView } from 'framer-motion';
 import { SKILLS_DATA, SkillItem } from './data';
 import ParticleSphere from './ParticleSphere';
@@ -149,22 +150,28 @@ const Skills = () => {
       </AnimatePresence>
 
       <motion.div animate={{ x: canvasShift }} transition={{ type: 'spring', damping: 25, stiffness: 120 }} className="skills-canvas-wrapper">
-        <View className="skills-canvas-view" ref={viewRef} style={{ touchAction: isMobile ? 'pan-y' : 'none' }}>
-          <PerspectiveCamera makeDefault position={[0, 0, 5.5]} fov={45} />
-          {selectedIndex === null && !isMobile && (
-            <OrbitControls enableZoom={false} enablePan={false} enableDamping dampingFactor={0.05} rotateSpeed={0.5} />
-          )}
-          <group scale={isMobile ? 0.5 : isNonDesktop ? 0.65 : 1}>
-            <ParticleSphere
-              count={isMobile ? 140 : 300}
-              radius={0.5}
-              onSelect={handleSelect}
-              portalRef={viewRef}
-              isPaused={isPaused}
-              isMobile={isMobile}
-            />
-          </group>
-        </View>
+        <div className="skills-canvas-view" ref={viewRef} style={{ touchAction: isMobile ? 'pan-y' : 'none' }}>
+          <Canvas
+            gl={{ antialias: false, powerPreference: 'high-performance' }}
+            dpr={Math.min(window.devicePixelRatio || 1, 2)}
+            style={{ width: '100%', height: '100%' }}
+          >
+            <PerspectiveCamera makeDefault position={[0, 0, 5.5]} fov={45} />
+            {selectedIndex === null && !isMobile && (
+              <OrbitControls enableZoom={false} enablePan={false} enableDamping dampingFactor={0.05} rotateSpeed={0.5} />
+            )}
+            <group scale={isMobile ? 0.5 : isNonDesktop ? 0.65 : 1}>
+              <ParticleSphere
+                count={isMobile ? 140 : 300}
+                radius={0.5}
+                onSelect={handleSelect}
+                portalRef={viewRef}
+                isPaused={isPaused}
+                isMobile={isMobile}
+              />
+            </group>
+          </Canvas>
+        </div>
       </motion.div>
     </section>
   );

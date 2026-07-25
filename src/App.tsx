@@ -1,6 +1,4 @@
 import { useState, useEffect, lazy, Suspense, useCallback } from 'react';
-import { Canvas } from '@react-three/fiber';
-import { View } from '@react-three/drei';
 import CustomCursor from './components/CustomCursor';
 import StarMapBackground from './components/StarMapBackground';
 import Hero from './components/sections/Hero';
@@ -25,37 +23,9 @@ function App() {
   const [revealed, setRevealed] = useState(false);
   const [preloaderGone, setPreloaderGone] = useState(false);
   const [isConnectModalOpen, setIsConnectModalOpen] = useState(false);
-  const [rootElement, setRootElement] = useState<HTMLElement | null>(null);
-  
-  const [vh, setVh] = useState(() => window.visualViewport?.height ?? window.innerHeight);
-
-  useEffect(() => {
-    const vv = window.visualViewport;
-    const update = () => setVh(vv?.height ?? window.innerHeight);
-    update();
-    if (vv) {
-      vv.addEventListener('resize', update);
-      vv.addEventListener('scroll', update);
-    } else {
-      window.addEventListener('resize', update);
-    }
-    return () => {
-      if (vv) {
-        vv.removeEventListener('resize', update);
-        vv.removeEventListener('scroll', update);
-      } else {
-        window.removeEventListener('resize', update);
-      }
-    };
-  }, []);
 
   const openConnectModal = useCallback(() => setIsConnectModalOpen(true), []);
   const closeConnectModal = useCallback(() => setIsConnectModalOpen(false), []);
-
-  // Get root element AFTER mount (not at module level)
-  useEffect(() => {
-    setRootElement(document.getElementById('root'));
-  }, []);
 
   // Scroll lock while the airlock is sealed
   useEffect(() => {
@@ -109,26 +79,6 @@ function App() {
       </main>
 
       <Footer onOpenConnectModal={openConnectModal} />
-
-      {rootElement && (
-        <Canvas
-          eventSource={rootElement}
-          gl={{ antialias: false, powerPreference: 'high-performance' }}
-          dpr={[1, 2]}
-          className="global-canvas"
-          style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            width: '100vw',
-            height: vh,
-            pointerEvents: 'none',
-            zIndex: 5,
-          }}
-        >
-          <View.Port />
-        </Canvas>
-      )}
 
       <ConnectModal isOpen={isConnectModalOpen} onClose={closeConnectModal} />
     </>
