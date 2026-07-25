@@ -22,7 +22,7 @@ uniform mat4 u_invMatrix;
 uniform int uMaxSteps;
 varying vec3 vWorldPos;
 
-float hash21(vec2 p){ p=fract(p*vec2(123.34,456.21)); p+=dot(p,p+45.32); return fract(p.x*p.y); }
+float hash21(vec2 p){ p=mod(p, 128.0); p=fract(p*vec2(123.34,456.21)); p+=dot(p,p+45.32); return fract(p.x*p.y); }
 float noise2(vec2 p){
   vec2 i=floor(p), f=fract(p);
   f=f*f*(3.0-2.0*f);
@@ -80,13 +80,23 @@ void main() {
         float rel = clamp((rho - R_IN) / (R_OUT - R_IN), 0.0, 1.0);
         float phi = atan(cp.z, cp.x);
         float omega = 0.55 * invRho * invRho * invRho;
-        // ponytail: single-phase continuous noise replaces two-phase crossfade.
-        // No fract() wrap = no discontinuity = no crossfade needed. Halves fbm calls.
-        float ang = phi - uTime * omega * 18.0;
-        float ca = cos(ang), sa = sin(ang);
-        float n1 = fbm(vec2(ca * 5.0, rho * 6.0 + sa * 3.0 + uTime * 0.18));
-        float n2 = fbm(vec2(sa * 5.0 - uTime * 0.25, rho * 8.0 + ca * 2.0));
-        float dens = (0.3 + 0.9 * n1) * (0.4 + 0.8 * n2);
+        float period = 40.0;
+        float phase0 = fract(uTime / period);
+        float phase1 = fract(uTime / period + 0.5);
+        float w0 = 1.0 - 2.0 * abs(phase0 - 0.5);
+        float t0 = phase0 * period;
+        float ang0 = phi - t0 * omega * 18.0;
+        float ca0 = cos(ang0), sa0 = sin(ang0);
+        float n1_0 = fbm(vec2(ca0 * 5.0, rho * 6.0 + sa0 * 3.0 + t0 * 0.18));
+        float n2_0 = fbm(vec2(sa0 * 5.0 - t0 * 0.25, rho * 8.0 + ca0 * 2.0));
+        float dens0 = (0.3 + 0.9 * n1_0) * (0.4 + 0.8 * n2_0);
+        float t1 = phase1 * period;
+        float ang1 = phi - t1 * omega * 18.0;
+        float ca1 = cos(ang1), sa1 = sin(ang1);
+        float n1_1 = fbm(vec2(ca1 * 5.0, rho * 6.0 + sa1 * 3.0 + t1 * 0.18));
+        float n2_1 = fbm(vec2(sa1 * 5.0 - t1 * 0.25, rho * 8.0 + ca1 * 2.0));
+        float dens1 = (0.3 + 0.9 * n1_1) * (0.4 + 0.8 * n2_1);
+        float dens = mix(dens1, dens0, w0);
         dens *= smoothstep(0.0, 0.03, rel) * (1.0 - smoothstep(0.65, 1.0, rel));
 
         vec3 dc = mix(vec3(1.0, 1.0, 1.0), vec3(0.75, 0.78, 0.84), smoothstep(0.0, 0.42, rel));
