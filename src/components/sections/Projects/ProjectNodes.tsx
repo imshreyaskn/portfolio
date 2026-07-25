@@ -90,7 +90,7 @@ const PlanetCratered = () => {
   );
 };
 
-const PlanetMatrix = () => {
+const PlanetTurbulent = () => {
   const clipId = useId();
   const gradId = useId();
   return (
@@ -99,27 +99,22 @@ const PlanetMatrix = () => {
       <circle cx="50" cy="50" r="47" fill="#06080C" stroke={`url(#${gradId})`} strokeWidth="6" />
       <clipPath id={clipId}><circle cx="50" cy="50" r="47" /></clipPath>
       <g clipPath={`url(#${clipId})`}>
-        {/* Equator and Prime Meridian */}
-        <path d="M 0 50 L 100 50" fill="none" stroke={`url(#${gradId})`} strokeWidth="1.5" opacity="0.4" />
-        <path d="M 50 0 L 50 100" fill="none" stroke={`url(#${gradId})`} strokeWidth="1.5" opacity="0.4" />
-        
-        {/* Latitudes (curving toward equator to create 3D spherical depth) */}
-        <path d="M -10 20 Q 50 58 110 20" fill="none" stroke={`url(#${gradId})`} strokeWidth="2.5" opacity="0.75" />
-        <path d="M -10 80 Q 50 42 110 80" fill="none" stroke={`url(#${gradId})`} strokeWidth="2.5" opacity="0.75" />
-        
-        {/* Longitudes (curving toward meridian to create 3D spherical depth) */}
-        <path d="M 20 -10 Q 58 50 20 110" fill="none" stroke={`url(#${gradId})`} strokeWidth="2.5" opacity="0.75" />
-        <path d="M 80 -10 Q 42 50 80 110" fill="none" stroke={`url(#${gradId})`} strokeWidth="2.5" opacity="0.75" />
-        
-        {/* Core firewall nexus */}
-        <circle cx="50" cy="50" r="6" fill="#06080C" stroke={`url(#${gradId})`} strokeWidth="2" />
-        <circle cx="50" cy="50" r="2.5" fill={`url(#${gradId})`} />
-        
-        {/* Intersection glowing data nodes */}
-        <circle cx="31" cy="31" r="2" fill={`url(#${gradId})`} opacity="0.9" />
-        <circle cx="69" cy="69" r="2" fill={`url(#${gradId})`} opacity="0.9" />
-        <circle cx="69" cy="31" r="2" fill={`url(#${gradId})`} opacity="0.9" />
-        <circle cx="31" cy="69" r="2" fill={`url(#${gradId})`} opacity="0.9" />
+        {/* Top thick band */}
+        <path d="M 0 20 C 20 10, 40 10, 60 20 C 75 27, 85 20, 100 10 L 100 25 C 80 30, 60 40, 40 30 C 20 20, 10 30, 0 35 Z" 
+              fill={`url(#${gradId})`} opacity="0.8" />
+              
+        {/* Middle jagged band with hook */}
+        <path d="M 0 45 C 25 40, 45 60, 65 50 C 80 42, 90 35, 100 35 L 100 48 C 85 55, 70 65, 50 60 L 45 70 L 35 60 C 20 65, 10 55, 0 55 Z" 
+              fill={`url(#${gradId})`} opacity="0.85" />
+              
+        {/* Bottom swooping band */}
+        <path d="M 0 75 C 30 65, 60 80, 100 65 L 100 85 C 70 95, 30 85, 0 95 Z" 
+              fill={`url(#${gradId})`} opacity="0.75" />
+
+        {/* Small floating storm islands to match the broken aesthetic */}
+        <path d="M 70 28 C 80 23, 90 33, 80 38 C 70 43, 60 33, 70 28 Z" fill={`url(#${gradId})`} opacity="0.7" />
+        <path d="M 15 65 C 25 60, 30 70, 20 75 C 10 80, 5 70, 15 65 Z" fill={`url(#${gradId})`} opacity="0.6" />
+        <path d="M 85 55 C 95 50, 105 60, 95 65 C 85 70, 75 60, 85 55 Z" fill={`url(#${gradId})`} opacity="0.6" />
       </g>
     </svg>
   );
@@ -237,7 +232,7 @@ const ProjectNodes = ({ isTouchPrimary, setHoveredPlanet, onTapPlanet }: Project
       <PlanetHitArea name="Lurien Matrix" visualSize={sm} top="34%" left="65.72%"
         isTouchPrimary={isTouchPrimary} setHoveredPlanet={setHoveredPlanet}
         onTapPlanet={onTapPlanet} hoverAnim={HOVER_CCW}>
-        <PlanetMatrix />
+        <PlanetTurbulent />
       </PlanetHitArea>
 
       <PlanetHitArea name="Alethia" visualSize={sm} top="46%" left="57.36%"
