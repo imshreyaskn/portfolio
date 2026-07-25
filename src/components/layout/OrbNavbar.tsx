@@ -346,8 +346,8 @@ const OrbNavbar = () => {
                 {activeSection === 'experience' && 'Scroll to explore timeline'}
                 {activeSection === 'projects' &&
                   (canHover
-                    ? 'Drag to orbit blackhole and click planets to explore projects'
-                    : 'Drag to orbit blackhole and tap planets to explore projects')}
+                    ? 'Orbit the singularity • Select planets to explore projects'
+                    : 'Orbit the singularity • Tap planets to explore projects')}
               </span>
             </motion.div>
           )}
