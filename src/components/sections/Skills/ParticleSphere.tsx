@@ -182,7 +182,11 @@ const ParticleSphere = memo(function ParticleSphere({
       holdPending.current = false; // NEW
     };
     window.addEventListener('pointerup', handleGlobalUp);
-    return () => window.removeEventListener('pointerup', handleGlobalUp);
+    window.addEventListener('pointercancel', handleGlobalUp);
+    return () => {
+      window.removeEventListener('pointerup', handleGlobalUp);
+      window.removeEventListener('pointercancel', handleGlobalUp);
+    };
   }, []);
 
   useFrame((state, delta) => {

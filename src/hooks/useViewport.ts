@@ -26,9 +26,27 @@ export function useViewport(): ViewportContext {
   );
 
   useEffect(() => {
-    const onResize = () => setViewportHeight(window.innerHeight);
+    let rafId = 0;
+    let lastWidth = typeof window !== 'undefined' ? window.innerWidth : 0;
+    const onResize = () => {
+      cancelAnimationFrame(rafId);
+      rafId = requestAnimationFrame(() => {
+        const curWidth = window.innerWidth;
+        setViewportHeight((prev) => {
+          const newH = window.innerHeight;
+          if (curWidth !== lastWidth || Math.abs(newH - prev) > 100) {
+            lastWidth = curWidth;
+            return newH;
+          }
+          return prev;
+        });
+      });
+    };
     window.addEventListener('resize', onResize, { passive: true });
-    return () => window.removeEventListener('resize', onResize);
+    return () => {
+      cancelAnimationFrame(rafId);
+      window.removeEventListener('resize', onResize);
+    };
   }, []);
 
   return useMemo(() => {

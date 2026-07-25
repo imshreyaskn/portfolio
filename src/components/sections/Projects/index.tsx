@@ -86,6 +86,43 @@ const Projects = () => {
 
   const handleHover = useCallback((p: string | null) => setHoveredPlanet(p), []);
 
+  const canvasElement = useMemo(
+    () => (
+      <div className="projects-canvas-wrapper">
+        <Canvas
+          gl={{ antialias: false, powerPreference: 'high-performance' }}
+          dpr={capability.dpr}
+          style={{ width: '100%', height: '100%', pointerEvents: 'none' }}
+        >
+          <PerspectiveCamera makeDefault position={[0, 0, 8]} fov={45} />
+          <group position={[0, posY, 0]}>
+            <Saturn
+              isPaused={!inView}
+              raymarchSteps={capability.raymarchSteps}
+              circleSegments={capability.circleSegments}
+            />
+          </group>
+        </Canvas>
+      </div>
+    ),
+    [capability.dpr, capability.raymarchSteps, capability.circleSegments, posY, inView],
+  );
+
+  const projectNodesElement = useMemo(
+    () => (
+      <div className="projects-overlay-anchor projects-nodes-anchor" aria-hidden="true">
+        <div className="projects-overlay-container projects-nodes-overlay">
+          <ProjectNodes
+            isTouchPrimary={isTouchPrimary}
+            setHoveredPlanet={handleHover}
+            onTapPlanet={handlePlanetTap}
+          />
+        </div>
+      </div>
+    ),
+    [isTouchPrimary, handleHover, handlePlanetTap],
+  );
+
   return (
     <section id="projects" className="projects-section" ref={sectionRef} aria-label="Projects">
       <GravityDust active={inView} />
@@ -112,34 +149,9 @@ const Projects = () => {
         </div>
       </div>
 
-      {/* 3D canvas — local Canvas child of section so it scrolls in 1:1 compositor sync with DOM threads (z-index 10) */}
-      <div className="projects-canvas-wrapper">
-        <Canvas
-          gl={{ antialias: false, powerPreference: 'high-performance' }}
-          dpr={capability.dpr}
-          style={{ width: '100%', height: '100%', pointerEvents: 'none' }}
-        >
-          <PerspectiveCamera makeDefault position={[0, 0, 8]} fov={45} />
-          <group position={[0, posY, 0]}>
-            <Saturn
-              isPaused={!inView}
-              raymarchSteps={capability.raymarchSteps}
-              circleSegments={capability.circleSegments}
-            />
-          </group>
-        </Canvas>
-      </div>
+      {canvasElement}
 
-      {/* 2D planet nodes overlay — positioned in FRONT of the black hole canvas (z-index 15) */}
-      <div className="projects-overlay-anchor projects-nodes-anchor" aria-hidden="true">
-        <div className="projects-overlay-container projects-nodes-overlay">
-          <ProjectNodes
-            isTouchPrimary={isTouchPrimary}
-            setHoveredPlanet={handleHover}
-            onTapPlanet={handlePlanetTap}
-          />
-        </div>
-      </div>
+      {projectNodesElement}
 
       {/* Planet label HUD */}
       <AnimatePresence>

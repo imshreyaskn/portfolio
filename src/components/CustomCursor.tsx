@@ -80,15 +80,19 @@ const CustomCursor = () => {
     let currentAngle = 0;
     
     const trailPositions = Array.from({ length: CURSOR_CONFIG.trailCount }, () => ({
-      x: -100, y: -100, scaleX: 1, scaleY: 1, angle: 0
+      x: -100, y: -100, scaleX: 1, scaleY: 1, angle: 0, opacity: 0
     }));
 
     let lastTime = performance.now();
     let frameId: number;
 
-    // --------------------------------------------------------
-    // EVENT HANDLERS
-    // --------------------------------------------------------
+    const scrollPosRef = { x: typeof window !== 'undefined' ? window.scrollX : 0, y: typeof window !== 'undefined' ? window.scrollY : 0 };
+    const updateScrollPos = () => {
+      scrollPosRef.x = window.scrollX;
+      scrollPosRef.y = window.scrollY;
+    };
+    window.addEventListener('scroll', updateScrollPos, { passive: true });
+
     const handleMouseMove = (e: MouseEvent) => {
       rawX = e.clientX;
       rawY = e.clientY;
@@ -206,9 +210,8 @@ const CustomCursor = () => {
       let blackHoleSuctionFactor = 1.0;
 
       if (bhRectRef.current.isValid && virtualX !== -100 && !hovering) {
-        // Convert absolute document coordinates back to current viewport coordinates (no reflow trap)
-        const currentBhViewportX = bhRectRef.current.x - window.scrollX;
-        const currentBhViewportY = bhRectRef.current.y - window.scrollY;
+        const currentBhViewportX = bhRectRef.current.x - scrollPosRef.current.x;
+        const currentBhViewportY = bhRectRef.current.y - scrollPosRef.current.y;
 
         const gdx = currentBhViewportX - virtualX;
         const gdy = currentBhViewportY - virtualY;
@@ -340,9 +343,9 @@ const CustomCursor = () => {
                dynamicOpacity = baseOpacity * velocityFactor;
             }
             
-            const currentOpacity = parseFloat(el.style.opacity || '0');
-            if (Math.abs(currentOpacity - dynamicOpacity) > 0.01) {
-              el.style.opacity = `${dynamicOpacity}`;
+            if (Math.abs(tp.opacity - dynamicOpacity) > 0.01) {
+              tp.opacity = dynamicOpacity;
+              el.style.opacity = dynamicOpacity.toFixed(2);
             }
           }
         }
@@ -358,6 +361,7 @@ const CustomCursor = () => {
       document.removeEventListener('mouseover', handleMouseOver);
       document.removeEventListener('mouseout', handleMouseOut);
       window.removeEventListener('resize', handleResize);
+      window.removeEventListener('scroll', updateScrollPos);
       window.removeEventListener('scroll', handleScroll);
       clearTimeout(resizeTimeout);
       clearTimeout(scrollTimeout);

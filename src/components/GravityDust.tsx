@@ -93,8 +93,7 @@ const GravityDust = ({ active }: { active: boolean }) => {
 
       // Dynamically compute the exact screen-space center of the black hole
       // using camera frustum projection — matches useBlackHoleLayout() on all aspect ratios.
-      const rect = canvas.getBoundingClientRect();
-      const aspect = window.innerWidth / window.innerHeight;
+      const aspect = cssW / (cssH || 1);
       const posY = aspect >= 1.5 ? 1.0 : 1.4;
       const worldHeight = 2 * Math.tan((45 * Math.PI) / 360) * 8; // frustum height at camera z=8, fov=45
       const singX = cssW * 0.5;
@@ -103,8 +102,8 @@ const GravityDust = ({ active }: { active: boolean }) => {
       // Time-based spawning (frame-rate independent) at the shared cursor position.
       if (activeRef.current && cursorPosition.active) {
         spawnAccumulator += dt * SPAWN_PER_SECOND;
-        const cx = cursorPosition.x - rect.left;
-        const cy = cursorPosition.y - rect.top;
+        const cx = cursorPosition.x - rectLeft;
+        const cy = cursorPosition.y - rectTop;
         while (spawnAccumulator >= 1 && particles.length < MAX_PARTICLES) {
           spawnAccumulator -= 1;
           particles.push({
@@ -155,10 +154,11 @@ const GravityDust = ({ active }: { active: boolean }) => {
         const heading = Math.atan2(p.vy, p.vx);
 
         // ponytail: setTransform avoids save/restore state-stack copies (40 particles × 60fps)
+        const dpr = Math.min(window.devicePixelRatio || 1, MAX_DPR);
         const cos_h = Math.cos(heading);
         const sin_h = Math.sin(heading);
         const rs = p.radius * stretch;
-        ctx.setTransform(cos_h * rs, sin_h * rs, -sin_h * p.radius, cos_h * p.radius, p.x, p.y);
+        ctx.setTransform(cos_h * rs * dpr, sin_h * rs * dpr, -sin_h * p.radius * dpr, cos_h * p.radius * dpr, p.x * dpr, p.y * dpr);
         ctx.beginPath();
         ctx.arc(0, 0, 1, 0, TAU);
         ctx.fillStyle = `rgba(255, 255, 255, ${p.alpha * fade})`;
