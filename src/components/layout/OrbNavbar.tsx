@@ -335,7 +335,7 @@ const OrbNavbar = () => {
               transition={{ duration: 0.3 }}
               className="section-tooltip"
             >
-              <img src={tooltipStar} alt="" style={{ width: '24px', height: '24px', opacity: 0.9, objectFit: 'contain', filter: 'drop-shadow(0 0 6px rgba(255, 255, 255, 0.8))' }} aria-hidden="true" />
+              <img src={tooltipStar} alt="" className="section-tooltip-icon" aria-hidden="true" />
               <span>
                 {activeSection === 'home' &&
                   (canHover ? 'Hover top right orb to navigate' : 'Tap the orb cluster to navigate')}

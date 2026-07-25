@@ -140,6 +140,14 @@
   text-shadow: 0 2px 8px rgba(0, 0, 0, 0.6);
 }
 
+.section-tooltip-icon {
+  width: 2.2em; /* Scales proportionally with the tooltip font-size */
+  height: 2.2em;
+  opacity: 0.9;
+  object-fit: contain;
+  filter: drop-shadow(0 0 6px rgba(255, 255, 255, 0.8));
+}
+
 /* ─── Any touch device (phone OR tablet) gets ≥48px targets ─── */
 @media (pointer: coarse) {
   .orb-hit-area {
