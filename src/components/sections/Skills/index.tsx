@@ -103,7 +103,33 @@ const Skills = () => {
     : (isRightSide ? '-25vw' : '25vw');
   const paneLeft = isMobile ? '0%' : (isRightSide ? '50%' : '0%');
   const slideFrom = isMobile ? (isRightSide ? '100vw' : '-100vw') : (isRightSide ? '50vw' : '-50vw');
-  const overlayShift = selectedIndex === null ? '0vw' : (isRightSide ? '-25vw' : '25vw');
+
+  const canvasElement = useMemo(
+    () => (
+      <div className="skills-canvas-view" ref={viewRef} style={{ touchAction: isMobile ? 'pan-y' : 'none' }}>
+        <Canvas
+          gl={{ antialias: false, powerPreference: 'high-performance' }}
+          dpr={Math.min(window.devicePixelRatio || 1, 2)}
+          style={{ width: '100%', height: '100%' }}
+        >
+          <PerspectiveCamera makeDefault position={[0, 0, 5.5]} fov={45} />
+          {selectedIndex === null && !isMobile && (
+            <OrbitControls enableZoom={false} enablePan={false} enableDamping dampingFactor={0.05} rotateSpeed={0.5} />
+          )}
+          <group scale={isMobile ? 0.5 : isNonDesktop ? 0.65 : 1}>
+            <ParticleSphere
+              count={isMobile ? 140 : 300}
+              radius={0.5}
+              onSelect={handleSelect}
+              isPaused={isPaused}
+              isMobile={isMobile}
+            />
+          </group>
+        </Canvas>
+      </div>
+    ),
+    [selectedIndex === null, isMobile, isNonDesktop, handleSelect, isPaused],
+  );
 
   return (
     <section id="skills" className="skills-section" ref={sectionRef}>
