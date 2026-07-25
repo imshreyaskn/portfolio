@@ -369,7 +369,11 @@ const ParticleSphere = memo(function ParticleSphere({
         const txt = textRefs.current[i];
         if (!txt) continue;
         txt.style.opacity = String(morph);
-        txt.style.display = morph > 0.01 ? (isMobileRef.current ? 'flex' : 'block') : 'none';
+        if (isMobileRef.current) {
+          txt.style.visibility = morph > 0.01 ? 'visible' : 'hidden';
+        } else {
+          txt.style.display = morph > 0.01 ? 'block' : 'none';
+        }
       }
     }
 
@@ -482,7 +486,8 @@ const ParticleSphere = memo(function ParticleSphere({
                   className={isMobile ? 'skills-3d-label-mobile' : 'silver-glow-text label'}
                   style={{
                     opacity: 0,
-                    display: 'none',
+                    visibility: isMobile ? 'hidden' : 'visible',
+                    display: isMobile ? 'flex' : 'none',
                     pointerEvents: isMobile ? 'auto' : 'none',
                     whiteSpace: 'nowrap',
                     cursor: isMobile ? 'pointer' : 'default',
