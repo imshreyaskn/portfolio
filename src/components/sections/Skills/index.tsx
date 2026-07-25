@@ -1,5 +1,5 @@
 // index.tsx — Skills section: layout, glassmorphism, 3D canvas, details pane
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import { OrbitControls, View, PerspectiveCamera } from '@react-three/drei';
 import { motion, AnimatePresence, useInView } from 'framer-motion';
 import { SKILLS_DATA } from './data';
@@ -69,6 +69,28 @@ const Skills = () => {
   const closeDetails = useCallback(() => setSelectedIndex(null), []);
 
   const layout = useLayoutStrategy(selectedIndex, isMobile);
+
+  // Prevent scroll when dragging the sphere on mobile
+  useEffect(() => {
+    const el = viewRef.current;
+    if (!el || !isMobile) return;
+
+    const handleTouchStart = (e: TouchEvent) => {
+      const touch = e.touches[0];
+      const rect = el.getBoundingClientRect();
+      const cx = rect.left + rect.width / 2;
+      const cy = rect.top + rect.height / 2;
+      const dist = Math.hypot(touch.clientX - cx, touch.clientY - cy);
+      
+      // 150px represents the approximate touch radius of the scaled sphere
+      if (dist < 150) {
+        e.preventDefault(); // stops the browser from intercepting the drag to scroll
+      }
+    };
+
+    el.addEventListener('touchstart', handleTouchStart, { passive: false });
+    return () => el.removeEventListener('touchstart', handleTouchStart);
+  }, [isMobile]);
 
   // Keyboard navigation for skill categories
   const handleKeyDown = useCallback(

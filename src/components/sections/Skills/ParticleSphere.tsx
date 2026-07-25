@@ -369,7 +369,7 @@ const ParticleSphere = memo(function ParticleSphere({
         const txt = textRefs.current[i];
         if (!txt) continue;
         txt.style.opacity = String(morph);
-        txt.style.display = morph > 0.01 ? 'block' : 'none';
+        txt.style.display = morph > 0.01 ? (isMobileRef.current ? 'flex' : 'block') : 'none';
       }
     }
 
@@ -486,7 +486,7 @@ const ParticleSphere = memo(function ParticleSphere({
                     pointerEvents: isMobile ? 'auto' : 'none',
                     whiteSpace: 'nowrap',
                     cursor: isMobile ? 'pointer' : 'default',
-                    ...(isMobile ? {} : { fontSize: '14px', letterSpacing: '0.15em' }),
+                    ...(isMobile ? { alignItems: 'center', justifyContent: 'center' } : { fontSize: '14px', letterSpacing: '0.15em' }),
                   }}
                   onClick={isMobile ? () => onSelectRef.current?.(i) : undefined}
                 >
