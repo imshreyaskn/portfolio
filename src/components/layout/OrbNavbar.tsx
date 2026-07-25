@@ -338,7 +338,7 @@ const OrbNavbar = () => {
               <img src={tooltipStar} alt="" className="section-tooltip-icon" aria-hidden="true" />
               <span>
                 {activeSection === 'home' &&
-                  (canHover ? 'Hover top right orb to navigate' : 'Tap the orb cluster to navigate')}
+                  (canHover ? 'Hover top left orb to navigate' : 'Tap the orb cluster to navigate')}
                 {activeSection === 'skills' &&
                   (canHover
                     ? 'Drag and spin the particle sphere to explore'
