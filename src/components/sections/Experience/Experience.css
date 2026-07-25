@@ -174,13 +174,23 @@
 }
 
 /* Animated border glow */
+.experience-panel:hover::before,
+.experience-panel.active::before {
+  animation: panelGradientSpin 4s linear infinite;
+}
+
+@keyframes panelGradientSpin {
+  0% { --panel-angle: 45deg; }
+  100% { --panel-angle: 405deg; }
+}
+
 .experience-panel::before {
   content: '';
   position: absolute;
   inset: 0;
   padding: 1.5px;
   background: linear-gradient(
-    45deg,
+    var(--panel-angle),
     rgba(255, 255, 255, 0.9) 0%,
     rgba(255, 255, 255, 0.05) 30%,
     rgba(255, 255, 255, 0.05) 70%,

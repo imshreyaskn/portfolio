@@ -214,7 +214,7 @@ const Experience = () => {
           {selectedExperience && selectedMoon !== null && (
             <motion.div
               key={`panel-${selectedExperience.id}`}
-              className={`experience-panel panel-${layout.panelSide}`}
+              className={`experience-panel panel-${layout.panelSide} active`}
               initial={{
                 x: layout.panelFromX,
                 y: layout.panelY,
