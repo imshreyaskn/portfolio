@@ -63,7 +63,7 @@ void main() {
     if (r2 > 200.0 && dot(pos, vel) > 0.0) break;
 
     float r = sqrt(r2);
-    float dt = clamp(0.1 * (r - 0.5), 0.04, 1.8);
+    float dt = clamp(0.15 * (r - 0.5), 0.04, 4.0);
     float invR = inversesqrt(r2);
     float r2i = r2 * r2;
     vec3 acc = (neg15h2 * invR / r2i) * pos;

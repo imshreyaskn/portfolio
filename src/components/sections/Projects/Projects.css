@@ -36,7 +36,6 @@
    Planets remain interactive (they set pointer-events:auto explicitly). */
 @media (max-width: 767px), (pointer: coarse) {
   .projects-canvas-wrapper {
-    pointer-events: none;
     touch-action: pan-y;
   }
 }
