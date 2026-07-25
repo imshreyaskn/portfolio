@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 
 const SECTION_IDS = ['home', 'skills', 'experience', 'projects', 'footer'] as const;
-const THRESHOLDS = [0.3, 0.6];
+const THRESHOLDS = [0.01, 0.1, 0.3, 0.6];
 const MAX_OBSERVE_ATTEMPTS = 20; // cap retries; don't poll forever
 
 export function useActiveSection(): string | null {
@@ -17,15 +17,23 @@ export function useActiveSection(): string | null {
         for (const entry of entries) {
           ratios.set(entry.target.id, entry.isIntersecting ? entry.intersectionRatio : 0);
         }
-        // Pick the most-visible section; bail out if unchanged (no re-render).
+        
+        // If footer is visible at all at the bottom of scroll, it takes priority
+        const footerRatio = ratios.get('footer') || 0;
         let best: string | null = null;
         let bestRatio = 0;
-        ratios.forEach((ratio, id) => {
-          if (ratio > bestRatio) {
-            bestRatio = ratio;
-            best = id;
-          }
-        });
+
+        if (footerRatio > 0.01) {
+          best = 'footer';
+          bestRatio = footerRatio;
+        } else {
+          ratios.forEach((ratio, id) => {
+            if (ratio > bestRatio) {
+              bestRatio = ratio;
+              best = id;
+            }
+          });
+        }
         setActiveSection((prev) => (bestRatio > 0 && prev !== best ? best : prev));
       },
       { threshold: THRESHOLDS },
