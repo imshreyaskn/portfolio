@@ -24,6 +24,28 @@ function App() {
   const [preloaderGone, setPreloaderGone] = useState(false);
   const [isConnectModalOpen, setIsConnectModalOpen] = useState(false);
   const [rootElement, setRootElement] = useState<HTMLElement | null>(null);
+  
+  const [vh, setVh] = useState(() => window.visualViewport?.height ?? window.innerHeight);
+
+  useEffect(() => {
+    const vv = window.visualViewport;
+    const update = () => setVh(vv?.height ?? window.innerHeight);
+    update();
+    if (vv) {
+      vv.addEventListener('resize', update);
+      vv.addEventListener('scroll', update);
+    } else {
+      window.addEventListener('resize', update);
+    }
+    return () => {
+      if (vv) {
+        vv.removeEventListener('resize', update);
+        vv.removeEventListener('scroll', update);
+      } else {
+        window.removeEventListener('resize', update);
+      }
+    };
+  }, []);
 
   const openConnectModal = useCallback(() => setIsConnectModalOpen(true), []);
   const closeConnectModal = useCallback(() => setIsConnectModalOpen(false), []);
@@ -91,7 +113,7 @@ function App() {
             top: 0,
             left: 0,
             width: '100vw',
-            height: '100vh',
+            height: vh,
             pointerEvents: 'none',
             zIndex: 5,
           }}

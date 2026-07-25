@@ -96,6 +96,11 @@ const ParticleSphere = memo(function ParticleSphere({
   const aimedRef = useRef(-1);
   const labelsShownRef = useRef(false);
 
+  // new refs, alongside the existing ones
+  const holdPending = useRef(false);
+  const holdStartPos = useRef({ x: 0, y: 0 });
+  const holdStartTime = useRef(0);
+
   useEffect(() => { onSelectRef.current = onSelect; }, [onSelect]);
   useEffect(() => { isMobileRef.current = isMobile; }, [isMobile]);
 
@@ -143,7 +148,20 @@ const ParticleSphere = memo(function ParticleSphere({
   }), []);
 
   const handlePointerMove = useCallback(() => { isInteracting.current = true; isSettled.current = false; }, []);
-  const handlePointerDown = useCallback(() => { isInteracting.current = true; isHolding.current = true; isSettled.current = false; }, []);
+  const handlePointerDown = useCallback((e: any) => {
+    isInteracting.current = true;
+    isSettled.current = false;
+    if (isMobileRef.current) {
+      // Don't commit to "hold" yet — wait a beat to see if this is a
+      // scroll swipe or a deliberate press-and-hold.
+      holdPending.current = true;
+      holdStartPos.current.x = e.pointer?.x ?? 0;
+      holdStartPos.current.y = e.pointer?.y ?? 0;
+      holdStartTime.current = performance.now();
+    } else {
+      isHolding.current = true;
+    }
+  }, []);
   const handlePointerUp = useCallback(() => { isHolding.current = false; }, []);
   const handlePointerOut = useCallback(() => { isInteracting.current = false; }, []);
 
@@ -161,6 +179,7 @@ const ParticleSphere = memo(function ParticleSphere({
         }
       }
       isHolding.current = false;
+      holdPending.current = false; // NEW
     };
     window.addEventListener('pointerup', handleGlobalUp);
     return () => window.removeEventListener('pointerup', handleGlobalUp);
@@ -168,6 +187,27 @@ const ParticleSphere = memo(function ParticleSphere({
 
   useFrame((state, delta) => {
     if (isPaused) return;
+
+    // Mobile-only gesture arbitration: a fast/large movement within the
+    // first ~120ms reads as "scrolling past", so we bail out of the hold
+    // entirely instead of racing the browser for the gesture.
+    if (isMobileRef.current && holdPending.current) {
+      const dx = state.pointer.x - holdStartPos.current.x;
+      const dy = state.pointer.y - holdStartPos.current.y;
+      const moved = Math.hypot(dx, dy);
+      const elapsed = performance.now() - holdStartTime.current;
+      const MOVE_ABORT_THRESHOLD = 0.06; // normalized device coords
+      const TIME_TO_COMMIT = 120; // ms
+
+      if (moved > MOVE_ABORT_THRESHOLD) {
+        holdPending.current = false;
+        isInteracting.current = false; // let it settle back, this was a scroll
+      } else if (elapsed > TIME_TO_COMMIT) {
+        holdPending.current = false;
+        isHolding.current = true; // confirmed deliberate hold
+      }
+      // else: still ambiguous, wait another frame
+    }
 
     if (isInteracting.current || isHolding.current) {
       pointerRef.current.x = state.pointer.x;

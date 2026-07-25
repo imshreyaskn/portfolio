@@ -28,9 +28,10 @@ const ConstellationGraph = ({ skills, isMobile }: { skills: SkillItem[]; isMobil
     return arr;
   }, [skills]);
 
-  // Float loop runs only on desktop (the constellation is a desktop flourish).
+  // Runs on both platforms now — mobile gets the same floating
+  // scatter + edge-line effect as desktop, just visually smaller
+  // via the container's height clamp in CSS.
   useEffect(() => {
-    if (isMobile) return;
     let frameId: number;
     const animate = () => {
       const time = performance.now() * 0.001;
@@ -52,29 +53,12 @@ const ConstellationGraph = ({ skills, isMobile }: { skills: SkillItem[]; isMobil
     };
     animate();
     return () => cancelAnimationFrame(frameId);
-  }, [skills, edges, isMobile]);
-
-  // Mobile: a clean left-aligned flow grid (no scatter, no overlap, no edges).
-  if (isMobile) {
-    return (
-      <div className="skills-graph-container skills-graph--mobile">
-        {skills.map((skill) => {
-          const Icon = skill.icon;
-          return (
-            <div key={skill.name} className="skills-icon-chip">
-              <Icon className="skills-chip-icon" style={{ fill: 'url(#animatedPremiumGrad)' }} />
-              <span className="skills-chip-name">{skill.name}</span>
-            </div>
-          );
-        })}
-      </div>
-    );
-  }
+  }, [skills, edges]);
 
   return (
     <div
       ref={containerRef}
-      className="skills-graph-container"
+      className={`skills-graph-container${isMobile ? ' skills-graph--mobile-scatter' : ''}`}
       style={{ position: 'relative', width: '100%', height: 'clamp(250px, 40vh, 400px)', marginTop: '1.5rem', overflow: 'visible' }}
     >
       <svg viewBox="0 0 100 100" preserveAspectRatio="none" style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', zIndex: 0, pointerEvents: 'none', overflow: 'visible' }}>
