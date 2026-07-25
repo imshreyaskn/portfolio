@@ -335,7 +335,7 @@ const OrbNavbar = () => {
               transition={{ duration: 0.3 }}
               className="section-tooltip"
             >
-              <img src={tooltipStar} alt="" style={{ width: '18px', height: '18px', opacity: 0.9, objectFit: 'contain' }} aria-hidden="true" />
+              <img src={tooltipStar} alt="" style={{ width: '24px', height: '24px', opacity: 0.9, objectFit: 'contain' }} aria-hidden="true" />
               <span>
                 {activeSection === 'home' &&
                   (canHover ? 'Hover top right orb to navigate' : 'Tap the orb cluster to navigate')}
@@ -346,8 +346,8 @@ const OrbNavbar = () => {
                 {activeSection === 'experience' && 'Scroll to explore timeline'}
                 {activeSection === 'projects' &&
                   (canHover
-                    ? 'Drag to orbit Saturn and click planets to explore projects'
-                    : 'Drag to orbit Saturn and tap planets to explore projects')}
+                    ? 'Drag to orbit blackhole and click planets to explore projects'
+                    : 'Drag to orbit blackhole and tap planets to explore projects')}
               </span>
             </motion.div>
           )}

@@ -39,8 +39,8 @@ export const PROJECT_TECH_STACKS: Record<string, string> = {
 };
 
 export const PROJECT_LINKS: Record<string, string> = {
-  Valerie: 'https://github.com/imshreyaskn/Valerie',
-  Alethia: 'https://github.com/imshreyaskn/Alethia',
-  Lucy: 'https://github.com/imshreyaskn/Lucy',
+  Valerie: 'https://valerie-beta.vercel.app/',
+  Alethia: 'https://alethia-gamma.vercel.app/',
+  Lucy: 'https://lucyx.vercel.app/',
   Relay: 'https://github.com/imshreyaskn/Relay',
 };
