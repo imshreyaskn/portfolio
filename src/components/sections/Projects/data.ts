@@ -32,6 +32,7 @@ export const generateParticles = (count = 18, seed = 42): ThreadParticle[] => {
 };
 
 export const PROJECT_TECH_STACKS: Record<string, string> = {
+  'Lurien Matrix': 'LLM Security Firewall | Python, FastAPI, DistilBERT, MongoDB, React',
   Valerie: 'Automated LLM Red Teaming Platform | FastAPI, LangGraph, LiteLLM, PostgreSQL',
   Alethia: 'Self-Healing CI/CD Agent | FastAPI, LangGraph, Docker, GitHub Apps',
   Lucy: 'Voice-Controlled Accessibility Agent | Browser Automation, Agent Orchestration',
@@ -39,6 +40,7 @@ export const PROJECT_TECH_STACKS: Record<string, string> = {
 };
 
 export const PROJECT_LINKS: Record<string, string> = {
+  'Lurien Matrix': 'https://lurienmatrix.vercel.app/',
   Valerie: 'https://valerie-beta.vercel.app/',
   Alethia: 'https://alethia-gamma.vercel.app/',
   Lucy: 'https://lucyx.vercel.app/',

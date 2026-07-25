@@ -199,13 +199,19 @@ const ProjectNodes = ({ isTouchPrimary, setHoveredPlanet, onTapPlanet }: Project
         <PlanetGasGiant />
       </PlanetHitArea>
 
-      <PlanetHitArea name="Alethia" visualSize={sm} top="38%" left="57.22%"
+      <PlanetHitArea name="Lurien Matrix" visualSize={lg} top="34%" left="65.72%"
+        isTouchPrimary={isTouchPrimary} setHoveredPlanet={setHoveredPlanet}
+        onTapPlanet={onTapPlanet} hoverAnim={HOVER_CCW}>
+        <PlanetCratered />
+      </PlanetHitArea>
+
+      <PlanetHitArea name="Alethia" visualSize={sm} top="46%" left="57.36%"
         isTouchPrimary={isTouchPrimary} setHoveredPlanet={setHoveredPlanet}
         onTapPlanet={onTapPlanet} hoverAnim={HOVER_CW}>
         <PlanetCratered />
       </PlanetHitArea>
 
-      <PlanetHitArea name="Valerie" visualSize={lg} top="54%" left="42.26%"
+      <PlanetHitArea name="Valerie" visualSize={lg} top="58%" left="42.36%"
         isTouchPrimary={isTouchPrimary} setHoveredPlanet={setHoveredPlanet}
         onTapPlanet={onTapPlanet} hoverAnim={HOVER_CCW}>
         <PlanetRinged />
