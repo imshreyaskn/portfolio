@@ -30,6 +30,11 @@
   top: 0;
   left: 0;
   z-index: 10;
+  /* Force Chrome's compositor to track this element's rect on the same
+     frame as the scrolling DOM.  Without this, the fixed WebGL canvas
+     repaints the black-hole at a stale scroll offset during fast/momentum
+     scrolling, making it "bounce" relative to the CSS-anchored threads. */
+  will-change: transform;
 }
 
 /* On touch devices, let vertical scroll pass straight through the canvas.
