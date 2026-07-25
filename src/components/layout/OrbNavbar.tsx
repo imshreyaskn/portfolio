@@ -325,9 +325,9 @@ const OrbNavbar = () => {
         aria-hidden="true"
       >
         <AnimatePresence mode="wait">
-          {activeSection && (
+          {activeSection && activeSection !== 'footer' && (
             <motion.div
-              key={activeSection === 'footer' ? 'projects' : activeSection}
+              key={activeSection}
               initial={{ opacity: 0, x: -10 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -10 }}
@@ -343,7 +343,7 @@ const OrbNavbar = () => {
                     ? 'Drag and spin the particle sphere to explore'
                     : 'Spin the particle sphere to explore')}
                 {activeSection === 'experience' && 'Scroll to explore timeline'}
-                {(activeSection === 'projects' || activeSection === 'footer') &&
+                {activeSection === 'projects' &&
                   (canHover
                     ? 'Drag to orbit Saturn and click planets to explore projects'
                     : 'Drag to orbit Saturn and tap planets to explore projects')}
