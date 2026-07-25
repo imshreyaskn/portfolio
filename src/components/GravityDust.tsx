@@ -148,18 +148,22 @@ const GravityDust = ({ active }: { active: boolean }) => {
         const stretch = 1 + speed * 0.008;
         const heading = Math.atan2(p.vy, p.vx);
 
-        ctx.save();
-        ctx.translate(p.x, p.y);
-        ctx.rotate(heading);
+        // ponytail: setTransform avoids save/restore state-stack copies (40 particles × 60fps)
+        const cos_h = Math.cos(heading);
+        const sin_h = Math.sin(heading);
+        const rs = p.radius * stretch;
+        ctx.setTransform(cos_h * rs, sin_h * rs, -sin_h * p.radius, cos_h * p.radius, p.x, p.y);
         ctx.beginPath();
-        ctx.ellipse(0, 0, p.radius * stretch, p.radius, 0, 0, TAU);
+        ctx.arc(0, 0, 1, 0, TAU);
         ctx.fillStyle = `rgba(255, 255, 255, ${p.alpha * fade})`;
         ctx.fill();
-        ctx.restore();
 
         particles[write++] = p;
       }
       particles.length = write;
+      // Reset transform after setTransform-based particle rendering
+      const dpr = Math.min(window.devicePixelRatio || 1, MAX_DPR);
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     };
 
     // Pause entirely when the tab is hidden (battery).

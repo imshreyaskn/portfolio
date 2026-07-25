@@ -1,7 +1,7 @@
 // index.tsx — Projects section. The 2D overlay (threads + planets) and the
 // saturn glow are plain CSS-anchored DOM boxes, NOT drei <Html>. They scroll
 // on the compositor together with the canvas → zero cross-browser desync.
-import { useState, useMemo, useRef, useLayoutEffect, useCallback } from 'react';
+import { useState, useMemo, useRef, useLayoutEffect, useCallback, memo } from 'react';
 import { motion, AnimatePresence, useInView } from 'framer-motion';
 import { View, PerspectiveCamera } from '@react-three/drei';
 import Saturn from './Saturn';
@@ -15,7 +15,7 @@ import GravityDust from '../../GravityDust';
 import './Projects.css';
 
 /* ─── Hanging threads SVG (static geometry, shared gradient) ─── */
-const ThreadsSVG = () => (
+const ThreadsSVG = memo(function ThreadsSVG() { return (
   <svg
     viewBox="-60 0 220 100"
     preserveAspectRatio="none"
@@ -46,7 +46,7 @@ const ThreadsSVG = () => (
     <path d="M 90 0 C 90 3, 83.33 12, 83.33 75" stroke="url(#threadGradient)" strokeWidth="1" fill="none" vectorEffect="non-scaling-stroke" />
     <path d="M 125 0 C 125 3, 100 12, 100 85" stroke="url(#threadGradient)" strokeWidth="1" fill="none" vectorEffect="non-scaling-stroke" />
   </svg>
-);
+); });
 
 const Projects = () => {
   const [hoveredPlanet, setHoveredPlanet] = useState<string | null>(null);

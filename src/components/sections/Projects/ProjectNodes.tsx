@@ -1,6 +1,6 @@
 // ProjectNodes.tsx — Interactive line-art planet SVGs with 48px hit areas.
 import { motion } from 'framer-motion';
-import { useId } from 'react';
+import { useId, memo } from 'react';
 import { PROJECT_LINKS, PROJECT_TECH_STACKS } from './data';
 
 /* ─── Shared animation constants (stable references) ─── */
@@ -216,7 +216,7 @@ interface ProjectNodesProps {
   onTapPlanet: (name: string) => void;
 }
 
-const ProjectNodes = ({ isTouchPrimary, setHoveredPlanet, onTapPlanet }: ProjectNodesProps) => {
+const ProjectNodes = memo(function ProjectNodes({ isTouchPrimary, setHoveredPlanet, onTapPlanet }: ProjectNodesProps) {
   // clamp() guarantees a visible minimum on short viewports
   const sm = 'clamp(18px, 2.4vh, 28px)';
   const lg = 'clamp(28px, 4vh, 40px)';
@@ -254,6 +254,6 @@ const ProjectNodes = ({ isTouchPrimary, setHoveredPlanet, onTapPlanet }: Project
       </PlanetHitArea>
     </>
   );
-};
+});
 
 export default ProjectNodes;

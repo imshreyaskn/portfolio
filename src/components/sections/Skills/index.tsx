@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect, useRef, useMemo } from 'react';
+import { useState, useCallback, useEffect, useRef, useMemo, memo } from 'react';
 import { OrbitControls, View, PerspectiveCamera } from '@react-three/drei';
 import { motion, AnimatePresence, useInView } from 'framer-motion';
 import { SKILLS_DATA, SkillItem } from './data';
@@ -6,7 +6,7 @@ import ParticleSphere from './ParticleSphere';
 import { useIsMobile } from '../../../hooks/useIsMobile';
 import './Skills.css';
 
-const ConstellationGraph = ({ skills, isMobile }: { skills: SkillItem[]; isMobile: boolean }) => {
+const ConstellationGraph = memo(function ConstellationGraph({ skills, isMobile, active }: { skills: SkillItem[]; isMobile: boolean; active: boolean }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const pathsRef = useRef<(SVGPathElement | null)[]>([]);
   const chipsRef = useRef<(HTMLDivElement | null)[]>([]);
@@ -32,6 +32,7 @@ const ConstellationGraph = ({ skills, isMobile }: { skills: SkillItem[]; isMobil
   // scatter + edge-line effect as desktop, just visually smaller
   // via the container's height clamp in CSS.
   useEffect(() => {
+    if (!active) return; // ponytail: pause RAF when section is off-screen
     let frameId: number;
     const animate = () => {
       const time = performance.now() * 0.001;
@@ -53,7 +54,7 @@ const ConstellationGraph = ({ skills, isMobile }: { skills: SkillItem[]; isMobil
     };
     animate();
     return () => cancelAnimationFrame(frameId);
-  }, [skills, edges]);
+  }, [skills, edges, active]);
 
   return (
     <div
@@ -79,7 +80,7 @@ const ConstellationGraph = ({ skills, isMobile }: { skills: SkillItem[]; isMobil
       })}
     </div>
   );
-};
+});
 
 const Skills = () => {
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
@@ -139,7 +140,7 @@ const Skills = () => {
                     <h2 className="skills-editorial-title silver-glow-text">{SKILLS_DATA[selectedIndex].category.toUpperCase()}</h2>
                     {SKILLS_DATA[selectedIndex].desc && <p className="skills-editorial-desc">{SKILLS_DATA[selectedIndex].desc}</p>}
                   </div>
-                  <ConstellationGraph skills={SKILLS_DATA[selectedIndex].skills} isMobile={isMobile} />
+                  <ConstellationGraph skills={SKILLS_DATA[selectedIndex].skills} isMobile={isMobile} active={inView} />
                 </div>
               </motion.div>
             </AnimatePresence>
