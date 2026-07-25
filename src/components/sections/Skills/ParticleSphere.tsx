@@ -365,13 +365,11 @@ const ParticleSphere = memo(function ParticleSphere({
     if (morph !== prevMorph || morph > 0) {
       ringMaterial.uniforms.uMorph.value = morph;
 
-      if (!isMobileRef.current) {
-        for (let i = 0; i < textRefs.current.length; i++) {
-          const txt = textRefs.current[i];
-          if (!txt) continue;
-          txt.style.opacity = String(morph);
-          txt.style.display = morph > 0.01 ? 'block' : 'none';
-        }
+      for (let i = 0; i < textRefs.current.length; i++) {
+        const txt = textRefs.current[i];
+        if (!txt) continue;
+        txt.style.opacity = String(morph);
+        txt.style.display = morph > 0.01 ? 'block' : 'none';
       }
     }
 
@@ -483,8 +481,8 @@ const ParticleSphere = memo(function ParticleSphere({
                   ref={(el) => { textRefs.current[i] = el; }}
                   className={isMobile ? 'skills-3d-label-mobile' : 'silver-glow-text label'}
                   style={{
-                    opacity: isMobile ? 1 : 0,
-                    display: isMobile ? 'block' : 'none',
+                    opacity: 0,
+                    display: 'none',
                     pointerEvents: isMobile ? 'auto' : 'none',
                     whiteSpace: 'nowrap',
                     cursor: isMobile ? 'pointer' : 'default',
