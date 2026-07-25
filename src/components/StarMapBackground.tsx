@@ -58,10 +58,10 @@ const StarMapBackground = () => {
     let currentScrollY = window.scrollY || 0;
     
     const handleMouseMove = (e: MouseEvent) => {
-      targetMouseX = (e.clientX / window.innerWidth) - 0.5;
-      targetMouseY = (e.clientY / window.innerHeight) - 0.5;
+      targetMouseX = (e.clientX / (cachedWindowWidth || 1200)) - 0.5;
+      targetMouseY = (e.clientY / (cachedH || 1000)) - 0.5;
     };
-    
+
     const handleScroll = () => {
       targetScrollY = window.scrollY;
     };
@@ -212,9 +212,16 @@ const StarMapBackground = () => {
         ctx.fill();
       }
 
-      // V8 Timsort is heavily optimized for nearly-sorted arrays.
-      // Sorting every frame prevents microscopic connection flickering and array disorder.
-      particles.sort((a, b) => a.rx - b.rx);
+      // ponytail: in-place insertion sort runs O(N) on nearly sorted particles with zero closure overhead
+      for (let i = 1; i < particles.length; i++) {
+        const item = particles[i];
+        let j = i - 1;
+        while (j >= 0 && particles[j].rx > item.rx) {
+          particles[j + 1] = particles[j];
+          j--;
+        }
+        particles[j + 1] = item;
+      }
 
       ctx.lineWidth = 0.4;
       

@@ -26,6 +26,12 @@ const CURSOR_CONFIG = {
   eventHorizon: 100, // 100% capture radius
 };
 
+// Pre-calculated trail element dimensions (eliminates Math.pow in rAF)
+const TRAIL_SIZES = Array.from({ length: CURSOR_CONFIG.trailCount }, (_, i) =>
+  Math.max(5, Math.round(CURSOR_CONFIG.trailBaseSize * Math.pow(CURSOR_CONFIG.trailSizeDecay, i)))
+);
+const CURSOR_HALF_SIZE = CURSOR_CONFIG.baseSize / 2;
+
 // --------------------------------------------------------
 // MATH UTILITIES
 // --------------------------------------------------------
@@ -274,15 +280,16 @@ const CustomCursor = () => {
 
       currentHoverScale = damp(currentHoverScale, targetHoverScale, 15.0, dt);
 
-      // 4. Render Main Cursor
+      // 4. Render Main Cursor (ponytail: omit .toFixed string allocations in hot rAF)
       if (cursorRef.current) {
         const finalScaleX = currentScaleX * currentHoverScale;
         const finalScaleY = currentScaleY * currentHoverScale;
-        const size = CURSOR_CONFIG.baseSize;
+        const cx = currentX - CURSOR_HALF_SIZE;
+        const cy = currentY - CURSOR_HALF_SIZE;
         
         const transform = hovering 
-          ? `translate3d(${(currentX - size/2).toFixed(2)}px, ${(currentY - size/2).toFixed(2)}px, 0) scale(${currentHoverScale.toFixed(2)}, ${currentHoverScale.toFixed(2)})`
-          : `translate3d(${(currentX - size/2).toFixed(2)}px, ${(currentY - size/2).toFixed(2)}px, 0) rotate(${currentAngle.toFixed(2)}deg) scale(${finalScaleX.toFixed(2)}, ${finalScaleY.toFixed(2)})`;
+          ? `translate3d(${cx}px, ${cy}px, 0) scale(${currentHoverScale})`
+          : `translate3d(${cx}px, ${cy}px, 0) rotate(${currentAngle}deg) scale(${finalScaleX}, ${finalScaleY})`;
         
         if (cursorRef.current.style.transform !== transform) {
           cursorRef.current.style.transform = transform;
@@ -323,10 +330,11 @@ const CustomCursor = () => {
           
           const el = trailRefs.current[i];
           if (el) {
-            const trailSize = Math.max(5, Math.round(CURSOR_CONFIG.trailBaseSize * Math.pow(CURSOR_CONFIG.trailSizeDecay, i)));
+            const trailSize = TRAIL_SIZES[i];
+            const halfTrail = trailSize / 2;
             const tTransform = hovering 
-              ? `translate3d(${tp.x - trailSize/2}px, ${tp.y - trailSize/2}px, 0) scale(0)`
-              : `translate3d(${tp.x - trailSize/2}px, ${tp.y - trailSize/2}px, 0) rotate(${tp.angle}deg) scale(${tp.scaleX}, ${tp.scaleY})`;
+              ? `translate3d(${tp.x - halfTrail}px, ${tp.y - halfTrail}px, 0) scale(0)`
+              : `translate3d(${tp.x - halfTrail}px, ${tp.y - halfTrail}px, 0) rotate(${tp.angle}deg) scale(${tp.scaleX}, ${tp.scaleY})`;
               
             if (el.style.transform !== tTransform) {
               el.style.transform = tTransform;
@@ -345,7 +353,7 @@ const CustomCursor = () => {
             
             if (Math.abs(tp.opacity - dynamicOpacity) > 0.01) {
               tp.opacity = dynamicOpacity;
-              el.style.opacity = dynamicOpacity.toFixed(2);
+              el.style.opacity = String(dynamicOpacity);
             }
           }
         }
@@ -395,8 +403,7 @@ const CustomCursor = () => {
         }}
       />
       {/* Decaying plasma trail */}
-      {Array.from({ length: CURSOR_CONFIG.trailCount }).map((_, i) => {
-        const size = Math.max(5, Math.round(CURSOR_CONFIG.trailBaseSize * Math.pow(CURSOR_CONFIG.trailSizeDecay, i)));
+      {TRAIL_SIZES.map((size, i) => {
         return (
           <div
             key={i}
@@ -415,7 +422,6 @@ const CustomCursor = () => {
               boxShadow: `0 0 ${size * 1.5}px rgba(107, 156, 255, 0.6), 0 0 ${size / 2}px rgba(255, 255, 255, 0.8)`,
               opacity: CURSOR_CONFIG.trailOpacityBase - (i * CURSOR_CONFIG.trailOpacityDecay),
               willChange: 'transform, opacity',
-              transition: 'opacity 0.2s ease-out',
               mixBlendMode: 'screen',
               transformOrigin: 'center center'
             }}

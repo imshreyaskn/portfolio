@@ -17,7 +17,7 @@ void main() {
 
 export const RAYMARCH_FRAGMENT = /* glsl */ `
 uniform float uTime;
-uniform vec3 u_camPosWorld;
+uniform vec3 u_localCam;
 uniform mat4 u_invMatrix;
 uniform int uMaxSteps;
 varying vec3 vWorldPos;
@@ -41,7 +41,8 @@ const float R_IN2=4.84;
 const float R_OUT2=144.0;
 
 void main() {
-  vec3 localCam = (u_invMatrix * vec4(u_camPosWorld, 1.0)).xyz;
+  // ponytail: localCam pre-transformed in JS eliminates 16 mults/12 adds per fragment
+  vec3 localCam = u_localCam;
   vec3 localPos = (u_invMatrix * vec4(vWorldPos, 1.0)).xyz;
   vec3 pos = localCam;
   vec3 vel = normalize(localPos - localCam);
@@ -147,7 +148,7 @@ export default function Saturn({
   const uniforms = useMemo(
     () => ({
       uTime: { value: 0 },
-      u_camPosWorld: { value: new Vector3() },
+      u_localCam: { value: new Vector3() },
       u_invMatrix: { value: new Matrix4() },
       uMaxSteps: { value: raymarchSteps },
     }),
@@ -169,8 +170,9 @@ export default function Saturn({
 
     // Camera + inverse-group matrix are cheap; always refresh so drag
     // rotation (PresentationControls) keeps lensing correctly.
-    materialRef.current.uniforms.u_camPosWorld.value.copy(camera.position);
-    materialRef.current.uniforms.u_invMatrix.value.copy(groupRef.current.matrixWorld).invert();
+    const invMat = materialRef.current.uniforms.u_invMatrix.value;
+    invMat.copy(groupRef.current.matrixWorld).invert();
+    materialRef.current.uniforms.u_localCam.value.copy(camera.position).applyMatrix4(invMat);
   });
 
   return (

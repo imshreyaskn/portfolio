@@ -19,6 +19,8 @@ const SWIRL = 0.25;
 const CONSUME_RADIUS = 10;
 const SPAWN_PER_SECOND = 18; // time-based, replaces the frame-rate-dependent Math.random()<0.3
 const MAX_DPR = 2;
+// Pre-computed camera frustum height at z=8, fov=45
+const WORLD_HEIGHT = 2 * Math.tan((45 * Math.PI) / 360) * 8;
 
 const GravityDust = ({ active }: { active: boolean }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -91,13 +93,11 @@ const GravityDust = ({ active }: { active: boolean }) => {
       clearedWhileIdle = false;
       ctx.clearRect(0, 0, cssW, cssH);
 
-      // Dynamically compute the exact screen-space center of the black hole
-      // using camera frustum projection — matches useBlackHoleLayout() on all aspect ratios.
+      // Dynamically compute center matching useBlackHoleLayout()
       const aspect = cssW / (cssH || 1);
       const posY = aspect >= 1.5 ? 1.0 : 1.4;
-      const worldHeight = 2 * Math.tan((45 * Math.PI) / 360) * 8; // frustum height at camera z=8, fov=45
       const singX = cssW * 0.5;
-      const singY = cssH * (0.5 - posY / worldHeight);
+      const singY = cssH * (0.5 - posY / WORLD_HEIGHT);
 
       // Time-based spawning (frame-rate independent) at the shared cursor position.
       if (activeRef.current && cursorPosition.active) {
@@ -120,6 +120,9 @@ const GravityDust = ({ active }: { active: boolean }) => {
       } else {
         spawnAccumulator = 0;
       }
+
+      // Query DPR once per tick (ponytail: hoist window object reads out of loop)
+      const dpr = Math.min(window.devicePixelRatio || 1, MAX_DPR);
 
       // In-place compaction — no per-frame array allocation.
       let write = 0;
@@ -153,8 +156,6 @@ const GravityDust = ({ active }: { active: boolean }) => {
         const stretch = 1 + speed * 0.008;
         const heading = Math.atan2(p.vy, p.vx);
 
-        // ponytail: setTransform avoids save/restore state-stack copies (40 particles × 60fps)
-        const dpr = Math.min(window.devicePixelRatio || 1, MAX_DPR);
         const cos_h = Math.cos(heading);
         const sin_h = Math.sin(heading);
         const rs = p.radius * stretch;
@@ -168,7 +169,6 @@ const GravityDust = ({ active }: { active: boolean }) => {
       }
       particles.length = write;
       // Reset transform after setTransform-based particle rendering
-      const dpr = Math.min(window.devicePixelRatio || 1, MAX_DPR);
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     };
 
