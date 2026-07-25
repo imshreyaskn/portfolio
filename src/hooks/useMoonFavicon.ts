@@ -13,10 +13,6 @@ const MOON_PHASES: PhaseRenderer[] = [
   // 0: New Moon
   (ctx) => {
     ctx.beginPath();
-    ctx.arc(16, 16, 14, 0, TAU);
-    ctx.fillStyle = '#111';
-    ctx.fill();
-    ctx.beginPath();
     ctx.arc(16, 16, 14, Math.PI * 0.5, Math.PI * 1.5);
     ctx.strokeStyle = 'rgba(200, 200, 220, 0.2)';
     ctx.lineWidth = 1;
@@ -25,24 +21,17 @@ const MOON_PHASES: PhaseRenderer[] = [
   // 1: Waxing Crescent
   (ctx) => {
     ctx.beginPath();
-    ctx.arc(16, 16, 14, 0, TAU);
-    ctx.fillStyle = '#111';
-    ctx.fill();
-    ctx.beginPath();
     ctx.arc(16, 16, 14, Math.PI * 0.5, Math.PI * 1.5);
     ctx.fillStyle = '#dcdce6';
     ctx.fill();
+    ctx.globalCompositeOperation = 'destination-out';
     ctx.beginPath();
     ctx.ellipse(16, 16, 8, 14, 0, Math.PI * 0.5, Math.PI * 1.5);
-    ctx.fillStyle = '#111';
     ctx.fill();
+    ctx.globalCompositeOperation = 'source-over';
   },
   // 2: First Quarter
   (ctx) => {
-    ctx.beginPath();
-    ctx.arc(16, 16, 14, 0, TAU);
-    ctx.fillStyle = '#111';
-    ctx.fill();
     ctx.beginPath();
     ctx.arc(16, 16, 14, Math.PI * 0.5, Math.PI * 1.5);
     ctx.fillStyle = '#dcdce6';
@@ -51,16 +40,11 @@ const MOON_PHASES: PhaseRenderer[] = [
   // 3: Waxing Gibbous
   (ctx) => {
     ctx.beginPath();
-    ctx.arc(16, 16, 14, 0, TAU);
+    ctx.arc(16, 16, 14, Math.PI * 0.5, Math.PI * 1.5);
     ctx.fillStyle = '#dcdce6';
-    ctx.fill();
-    ctx.beginPath();
-    ctx.arc(16, 16, 14, Math.PI * 1.5, Math.PI * 0.5);
-    ctx.fillStyle = '#111';
     ctx.fill();
     ctx.beginPath();
     ctx.ellipse(16, 16, 8, 14, 0, Math.PI * 1.5, Math.PI * 0.5);
-    ctx.fillStyle = '#dcdce6';
     ctx.fill();
   },
   // 4: Full Moon
@@ -73,24 +57,15 @@ const MOON_PHASES: PhaseRenderer[] = [
   // 5: Waning Gibbous
   (ctx) => {
     ctx.beginPath();
-    ctx.arc(16, 16, 14, 0, TAU);
+    ctx.arc(16, 16, 14, Math.PI * 1.5, Math.PI * 0.5);
     ctx.fillStyle = '#dcdce6';
-    ctx.fill();
-    ctx.beginPath();
-    ctx.arc(16, 16, 14, Math.PI * 0.5, Math.PI * 1.5);
-    ctx.fillStyle = '#111';
     ctx.fill();
     ctx.beginPath();
     ctx.ellipse(16, 16, 8, 14, 0, Math.PI * 0.5, Math.PI * 1.5);
-    ctx.fillStyle = '#dcdce6';
     ctx.fill();
   },
   // 6: Last Quarter
   (ctx) => {
-    ctx.beginPath();
-    ctx.arc(16, 16, 14, 0, TAU);
-    ctx.fillStyle = '#111';
-    ctx.fill();
     ctx.beginPath();
     ctx.arc(16, 16, 14, Math.PI * 1.5, Math.PI * 0.5);
     ctx.fillStyle = '#dcdce6';
@@ -99,17 +74,14 @@ const MOON_PHASES: PhaseRenderer[] = [
   // 7: Waning Crescent
   (ctx) => {
     ctx.beginPath();
-    ctx.arc(16, 16, 14, 0, TAU);
-    ctx.fillStyle = '#111';
-    ctx.fill();
-    ctx.beginPath();
     ctx.arc(16, 16, 14, Math.PI * 1.5, Math.PI * 0.5);
     ctx.fillStyle = '#dcdce6';
     ctx.fill();
+    ctx.globalCompositeOperation = 'destination-out';
     ctx.beginPath();
     ctx.ellipse(16, 16, 8, 14, 0, Math.PI * 1.5, Math.PI * 0.5);
-    ctx.fillStyle = '#111';
     ctx.fill();
+    ctx.globalCompositeOperation = 'source-over';
   },
 ];
 
