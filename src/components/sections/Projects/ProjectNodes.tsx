@@ -192,25 +192,25 @@ const ProjectNodes = ({ isTouchPrimary, setHoveredPlanet, onTapPlanet }: Project
 
   return (
     <>
-      <PlanetHitArea name="Lucy" visualSize={sm} top="22%" left="27.27%"
+      <PlanetHitArea name="Lucy" visualSize={sm} top="22%" left="18.09%"
         isTouchPrimary={isTouchPrimary} setHoveredPlanet={setHoveredPlanet}
         onTapPlanet={onTapPlanet} hoverAnim={HOVER_CW}>
         <PlanetGasGiant />
       </PlanetHitArea>
 
-      <PlanetHitArea name="Alethia" visualSize={sm} top="38%" left="57.58%"
+      <PlanetHitArea name="Alethia" visualSize={sm} top="38%" left="57.22%"
         isTouchPrimary={isTouchPrimary} setHoveredPlanet={setHoveredPlanet}
         onTapPlanet={onTapPlanet} hoverAnim={HOVER_CW}>
         <PlanetCratered />
       </PlanetHitArea>
 
-      <PlanetHitArea name="Valerie" visualSize={lg} top="54%" left="42.42%"
+      <PlanetHitArea name="Valerie" visualSize={lg} top="54%" left="42.26%"
         isTouchPrimary={isTouchPrimary} setHoveredPlanet={setHoveredPlanet}
         onTapPlanet={onTapPlanet} hoverAnim={HOVER_CCW}>
         <PlanetRinged />
       </PlanetHitArea>
 
-      <PlanetHitArea name="Relay" visualSize={sm} top="70%" left="72.73%"
+      <PlanetHitArea name="Relay" visualSize={sm} top="70%" left="72.90%"
         isTouchPrimary={isTouchPrimary} setHoveredPlanet={setHoveredPlanet}
         onTapPlanet={onTapPlanet} hoverAnim={HOVER_CCW}>
         <PlanetEarthLike />
