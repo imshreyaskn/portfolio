@@ -7,6 +7,7 @@ import { useAnimationFrame, dampFactor } from '../../hooks/useAnimationFrame';
 import { useCanHover } from '../../hooks/useMediaQuery';
 import { useSystemScale } from '../../hooks/useSystemScale';
 import { useActiveSection } from '../../hooks/useActiveSection';
+import tooltipStar from '../../assets/tooltip-star.png';
 import './OrbNavbar.css';
 
 export interface NavNode {
@@ -334,7 +335,7 @@ const OrbNavbar = () => {
               transition={{ duration: 0.3 }}
               className="section-tooltip"
             >
-              <span style={{ fontSize: '14px', opacity: 0.8 }}>✦</span>
+              <img src={tooltipStar} alt="" style={{ width: '18px', height: '18px', opacity: 0.9, objectFit: 'contain' }} aria-hidden="true" />
               <span>
                 {activeSection === 'home' &&
                   (canHover ? 'Hover top right orb to navigate' : 'Tap the orb cluster to navigate')}
