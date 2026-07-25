@@ -41,6 +41,8 @@
   justify-content: flex-end;
   align-items: flex-end;
   container-type: inline-size; /* enables container queries for inner scaling */
+  -webkit-mask-image: linear-gradient(to bottom, black 65%, transparent 95%);
+  mask-image: linear-gradient(to bottom, black 65%, transparent 95%);
 }
 
 .hero-image {
