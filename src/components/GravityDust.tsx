@@ -204,7 +204,7 @@ const GravityDust = ({ active }: { active: boolean }) => {
         left: 0,
         width: '100%',
         height: '100%',
-        zIndex: 15,
+        zIndex: 6, // behind black hole canvas (z-index 10)
         pointerEvents: 'none',
         opacity: active ? 1 : 0,
         transition: 'opacity 0.5s ease',
