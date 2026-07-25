@@ -1,217 +1,205 @@
-import { useRef, useMemo } from 'react';
+// Saturn.tsx — Raymarched black hole with gravitational lensing.
+// Quality-adaptive: integration steps are tunable at runtime via uMaxSteps.
+import { useRef, useMemo, useEffect } from 'react';
 import { useFrame } from '@react-three/fiber';
-import { 
-  DoubleSide, 
-  BackSide, 
-  BufferGeometry, 
-  Float32BufferAttribute, 
-  PointsMaterial, 
-  Color, 
-  AdditiveBlending 
-} from 'three';
+import { Matrix4, Vector3 } from 'three';
 import type { Group, ShaderMaterial } from 'three';
-import { PresentationControls, Html } from '@react-three/drei';
+import { PresentationControls, Billboard } from '@react-three/drei';
 
-// ─────────────────────────────────────────────────────────────────────────────
-// 1. SHADERS (Photon Ring / Event Horizon)
-// ─────────────────────────────────────────────────────────────────────────────
-
-/**
- * ponytail: We skip actual gravitational lensing (screen-space distortion)
- * because rendering a 100px element with a full-scene render target just 
- * to warp the stars behind it burns massive GPU budget for zero UX gain.
- * Instead, we fake the light-bending with a sharp Fresnel rim shader.
- */
-const PHOTON_RING_VERTEX = /* glsl */`
-  varying vec3 vViewPos;
-  varying vec3 vNormal;
-  void main() {
-    vec4 mvPos = modelViewMatrix * vec4(position, 1.0);
-    vViewPos = mvPos.xyz;
-    vNormal = normalMatrix * normal;
-    gl_Position = projectionMatrix * mvPos;
-  }
+export const RAYMARCH_VERTEX = /* glsl */ `
+varying vec3 vWorldPos;
+void main() {
+  vec4 wp = modelMatrix * vec4(position, 1.0);
+  vWorldPos = wp.xyz;
+  gl_Position = projectionMatrix * viewMatrix * wp;
+}
 `;
 
-const PHOTON_RING_FRAGMENT = /* glsl */`
-  uniform float uTime;
-  varying vec3 vViewPos;
-  varying vec3 vNormal;
+export const RAYMARCH_FRAGMENT = /* glsl */ `
+uniform float uTime;
+uniform vec3 u_camPosWorld;
+uniform mat4 u_invMatrix;
+uniform int uMaxSteps;
+varying vec3 vWorldPos;
 
-  vec3 getSweepColor(float t) {
-    vec3 pureWhite = vec3(1.0);
-    vec3 coolGrey  = vec3(0.478, 0.478, 0.549); // #7A7A8C
-    if (t < 0.35) return mix(pureWhite, coolGrey, t / 0.35);
-    else if (t < 0.5) return mix(coolGrey, pureWhite, (t - 0.35) / 0.15);
-    else if (t < 0.65) return mix(pureWhite, coolGrey, (t - 0.5) / 0.15);
-    else return mix(coolGrey, pureWhite, (t - 0.65) / 0.35);
+float hash21(vec2 p){ p=fract(p*vec2(123.34,456.21)); p+=dot(p,p+45.32); return fract(p.x*p.y); }
+float noise2(vec2 p){
+  vec2 i=floor(p), f=fract(p);
+  f=f*f*(3.0-2.0*f);
+  float a=hash21(i), b=hash21(i+vec2(1.0,0.0)), c=hash21(i+vec2(0.0,1.0)), d=hash21(i+vec2(1.0,1.0));
+  return mix(mix(a,b,f.x),mix(c,d,f.x),f.y);
+}
+float fbm(vec2 p){
+  float s=0.0, a=0.5;
+  for(int i=0;i<2;i++){ s+=a*noise2(p); p*=2.02; a*=0.5; }
+  return s;
+}
+
+const float R_IN=2.2;
+const float R_OUT=12.0;
+const float R_IN2=4.84;
+const float R_OUT2=144.0;
+
+void main() {
+  vec3 localCam = (u_invMatrix * vec4(u_camPosWorld, 1.0)).xyz;
+  vec3 localPos = (u_invMatrix * vec4(vWorldPos, 1.0)).xyz;
+  vec3 pos = localCam;
+  vec3 vel = normalize(localPos - localCam);
+  vec3 col = vec3(0.0);
+  float alpha = 0.0;
+  bool horizon = false;
+
+  vec3 hvec0 = cross(pos, vel);
+  float neg15h2 = -1.5 * dot(hvec0, hvec0);
+
+  // Compile-time bound (110) satisfies strict GLSL drivers; the dynamic
+  // uMaxSteps break lets low-end tiers cut integration cost at runtime.
+  for (int i = 0; i < 110; i++) {
+    if (i >= uMaxSteps) break;
+    if (alpha > 0.995) break;
+
+    float r2 = dot(pos, pos);
+    if (r2 < 1.0) { horizon = true; break; }
+    if (r2 > 200.0 && dot(pos, vel) > 0.0) break;
+
+    float r = sqrt(r2);
+    float dt = clamp(0.1 * (r - 0.5), 0.04, 1.8);
+    float invR = inversesqrt(r2);
+    float r2i = r2 * r2;
+    vec3 acc = (neg15h2 * invR / r2i) * pos;
+    vel += acc * dt;
+    float py = pos.y;
+    pos += vel * dt;
+
+    if (py * pos.y < 0.0) {
+      vec3 cp = pos - vel * (pos.y / vel.y);
+      float rho2 = dot(cp.xz, cp.xz);
+      if (rho2 > R_IN2 && rho2 < R_OUT2) {
+        float invRho = inversesqrt(rho2);
+        float rho = rho2 * invRho;
+        float rel = clamp((rho - R_IN) / (R_OUT - R_IN), 0.0, 1.0);
+        float phi = atan(cp.z, cp.x);
+        float omega = 0.55 * invRho * invRho * invRho;
+        float period = 40.0;
+        float phase0 = fract(uTime / period);
+        float phase1 = fract(uTime / period + 0.5);
+        float w0 = 1.0 - 2.0 * abs(phase0 - 0.5);
+        float t0 = phase0 * period;
+        float ang0 = phi - t0 * omega * 18.0;
+        float ca0 = cos(ang0), sa0 = sin(ang0);
+        float n1_0 = fbm(vec2(ca0 * 5.0, rho * 6.0 + sa0 * 3.0 + t0 * 0.18));
+        float n2_0 = fbm(vec2(sa0 * 5.0 - t0 * 0.25, rho * 8.0 + ca0 * 2.0));
+        float dens0 = (0.3 + 0.9 * n1_0) * (0.4 + 0.8 * n2_0);
+        float t1 = phase1 * period;
+        float ang1 = phi - t1 * omega * 18.0;
+        float ca1 = cos(ang1), sa1 = sin(ang1);
+        float n1_1 = fbm(vec2(ca1 * 5.0, rho * 6.0 + sa1 * 3.0 + t1 * 0.18));
+        float n2_1 = fbm(vec2(sa1 * 5.0 - t1 * 0.25, rho * 8.0 + ca1 * 2.0));
+        float dens1 = (0.3 + 0.9 * n1_1) * (0.4 + 0.8 * n2_1);
+        float dens = mix(dens1, dens0, w0);
+        dens *= smoothstep(0.0, 0.03, rel) * (1.0 - smoothstep(0.65, 1.0, rel));
+
+        vec3 dc = mix(vec3(1.0, 1.0, 1.0), vec3(0.75, 0.78, 0.84), smoothstep(0.0, 0.42, rel));
+        dc = mix(dc, vec3(0.35, 0.38, 0.45), smoothstep(0.42, 1.0, rel));
+        float innerGlow = clamp(1.0 - rel * 3.0, 0.0, 1.0);
+        innerGlow *= innerGlow; innerGlow *= innerGlow;
+        dc += vec3(0.92, 0.96, 1.0) * 3.5 * innerGlow;
+
+        vec3 tangent = vec3(-cp.z, 0.0, cp.x) * invRho;
+        vec3 tocam = normalize(localCam - cp);
+        float toward = dot(tangent, tocam);
+        vec3 approachingShift = vec3(0.95, 0.98, 1.0);
+        vec3 recedingShift = vec3(0.3, 0.32, 0.38);
+        dc = mix(dc, approachingShift, max(0.0, toward) * 0.5);
+        dc = mix(dc, recedingShift, max(0.0, -toward) * 0.5);
+        dc *= 1.0 + 0.8 * toward;
+        dens *= 1.0 + 0.25 * toward;
+
+        float a = clamp(dens * 0.55, 0.0, 1.0);
+        col += dc * a * (1.0 - alpha);
+        alpha += a * (1.0 - alpha);
+      }
+    }
   }
 
-  void main() {
-    // Angular sweep based on time
-    float angle = atan(vViewPos.y, vViewPos.x) - uTime * 1.0472;
-    float t = fract(angle / (2.0 * 3.14159265));
-    vec3 baseColor = getSweepColor(t);
-
-    vec3 n = gl_FrontFacing ? vNormal : -vNormal;
-    vec3 viewDir = normalize(-vViewPos);
-    
-    // Grazing angle determines fresnel intensity
-    float d = clamp(abs(dot(normalize(n), viewDir)), 0.0, 1.0);
-    float fresnel = pow(1.0 - d, 7.0);
-    float edgeFade = smoothstep(0.0, 0.15, d); // Prevents hard clipping at geometry bounds
-
-    // Pure white blowout at the brightest points
-    vec3 finalColor = mix(baseColor, vec3(1.0), fresnel * 0.9);
-    float alpha = clamp(fresnel * edgeFade * 2.0, 0.0, 1.0);
-
-    gl_FragColor = vec4(finalColor, alpha);
-  }
+  if (horizon) { alpha = 1.0; }
+  col *= 1.6;
+  col = (col * (2.51 * col + 0.03)) / (col * (2.43 * col + 0.59) + 0.14);
+  gl_FragColor = vec4(col, alpha);
+}
 `;
 
-// ─────────────────────────────────────────────────────────────────────────────
-// 2. ACCRETION DISK (Particle System)
-// ─────────────────────────────────────────────────────────────────────────────
-
-interface RingConfig {
-  inner: number;
-  outer: number;
-  count: number;
-  opacity: number;
-  size: number;
+interface SaturnProps {
+  isPaused?: boolean;
+  raymarchSteps?: number;
+  circleSegments?: number;
 }
 
-const ACCRETION_DISKS: RingConfig[] = [
-  { inner: 1.40, outer: 2.50, count: 1200, opacity: 0.40, size: 0.016 },
-  { inner: 2.60, outer: 3.40, count: 800, opacity: 0.15, size: 0.014 },
-  { inner: 3.50, outer: 4.30, count: 1000, opacity: 0.50, size: 0.018 },
-];
+export default function Saturn({
+  isPaused = false,
+  raymarchSteps = 110,
+  circleSegments = 32,
+}: SaturnProps) {
+  const groupRef = useRef<Group>(null);
+  const materialRef = useRef<ShaderMaterial>(null);
+  const frozenTime = useRef(0);
 
-function buildDiskGeometry(innerR: number, outerR: number, count: number) {
-  const positions = new Float32Array(count * 3);
-  const colors = new Float32Array(count * 3);
-  
-  const hot = new Color('#FFFFFF');
-  const cool = new Color('#7A7A8C');
-
-  for (let i = 0; i < count; i++) {
-    const bias = Math.pow(Math.random(), 3); // Cluster at inner horizon
-    const r = innerR + bias * (outerR - innerR);
-    const theta = Math.random() * Math.PI * 2;
-    const z = (Math.random() - 0.5) * (0.04 + bias * 0.1); 
-    
-    positions[i * 3]     = Math.cos(theta) * r;
-    positions[i * 3 + 1] = Math.sin(theta) * r;
-    positions[i * 3 + 2] = z;
-
-    const heat = 1 - bias;
-    const c = hot.clone().lerp(cool, 1 - Math.pow(heat, 0.4)); 
-    
-    colors[i * 3] = c.r; 
-    colors[i * 3 + 1] = c.g; 
-    colors[i * 3 + 2] = c.b;
-  }
-  
-  return { positions, colors };
-}
-
-const AccretionRing = ({ inner, outer, count, opacity, size }: RingConfig) => {
-  const geometry = useMemo(() => {
-    const { positions, colors } = buildDiskGeometry(inner, outer, count);
-    const geo = new BufferGeometry();
-    geo.setAttribute('position', new Float32BufferAttribute(positions, 3));
-    geo.setAttribute('color', new Float32BufferAttribute(colors, 3));
-    return geo;
-  }, [inner, outer, count]);
-
-  const material = useMemo(
-    () => new PointsMaterial({ 
-      vertexColors: true, 
-      size, 
-      transparent: true, 
-      opacity: opacity * 1.5,
-      sizeAttenuation: true, 
-      depthWrite: false,
-      blending: AdditiveBlending
+  const uniforms = useMemo(
+    () => ({
+      uTime: { value: 0 },
+      u_camPosWorld: { value: new Vector3() },
+      u_invMatrix: { value: new Matrix4() },
+      uMaxSteps: { value: raymarchSteps },
     }),
-    [opacity, size]
+    [],
   );
 
-  return <points geometry={geometry} material={material} raycast={() => null} />;
-};
+  // Reflect quality-tier changes without rebuilding the material
+  useEffect(() => {
+    uniforms.uMaxSteps.value = raymarchSteps;
+  }, [raymarchSteps, uniforms]);
 
-// ─────────────────────────────────────────────────────────────────────────────
-// 3. MAIN COMPONENT (The Black Hole)
-// ─────────────────────────────────────────────────────────────────────────────
-
-export default function Saturn({ isPaused = false }: { isPaused?: boolean }) {
-  const diskRef = useRef<Group>(null);
-  const photonRingRef = useRef<ShaderMaterial>(null);
-
-  const photonUniforms = useMemo(() => ({ uTime: { value: 0 } }), []);
-
-  useFrame(({ clock }) => {
+  useFrame(({ clock, camera }) => {
     if (isPaused) return;
-    
+    if (!materialRef.current || !groupRef.current) return;
+
     const t = clock.getElapsedTime();
-    if (diskRef.current) {
-      diskRef.current.rotation.z = -t * 0.05;
-    }
-    if (photonRingRef.current) {
-      photonRingRef.current.uniforms.uTime.value = t;
-    }
+    materialRef.current.uniforms.uTime.value = t * 4.5;
+    frozenTime.current = t * 4.5;
+
+    // Camera + inverse-group matrix are cheap; always refresh so drag
+    // rotation (PresentationControls) keeps lensing correctly.
+    materialRef.current.uniforms.u_camPosWorld.value.copy(camera.position);
+    materialRef.current.uniforms.u_invMatrix.value.copy(groupRef.current.matrixWorld).invert();
   });
 
   return (
-    <group rotation={[0.2, 0, 0]} scale={0.35}>
-      
-      {/* Event Horizon */}
-      <mesh>
-        <sphereGeometry args={[0.85, 32, 32]} />
-        <meshBasicMaterial color="#000000" />
-      </mesh>
-
-      {/* Ambient Deep Glow (CSS-based to save GPU fill rate) */}
-      <Html center position={[0, 0, -1]} zIndexRange={[-10, -1]}>
-        <div className="saturn-glow" />
-      </Html>
-
-      {/* Photon Ring (Trapped light) */}
-      <mesh>
-        <sphereGeometry args={[0.90, 48, 48]} />
-        <shaderMaterial
-          ref={photonRingRef}
-          side={BackSide}
-          transparent
-          depthWrite={false}
-          depthTest={false} // Renders inside the event horizon bounds
-          blending={AdditiveBlending}
-          vertexShader={PHOTON_RING_VERTEX}
-          fragmentShader={PHOTON_RING_FRAGMENT}
-          uniforms={photonUniforms}
-        />
-      </mesh>
-
-      {/* Interactive Zone & Accretion Disk */}
+    <group rotation={[0.42, 0.08, -0.06]} scale={0.14}>
       <PresentationControls
         global={false}
-        cursor={true}
+        cursor
         speed={1.5}
-        polar={[-0.15, 0.15]}
-        azimuth={[-0.15, 0.15]}
+        polar={[-0.4, 0.4]}
+        azimuth={[-0.6, 0.6]}
       >
-        <mesh rotation={[Math.PI / 2 + 0.15, 0, 0]}>
-          <circleGeometry args={[4.5, 32]} />
-          <meshBasicMaterial visible={false} side={DoubleSide} />
-        </mesh>
-
-        <group ref={diskRef} rotation={[Math.PI / 2 + 0.15, 0, 0]}>
-          {ACCRETION_DISKS.map((ring, i) => (
-            <AccretionRing key={i} {...ring} />
-          ))}
+        <group ref={groupRef}>
+          <Billboard>
+            <mesh>
+              {/* Circle tightly wraps the disk — saves fill-rate vs a quad */}
+              <circleGeometry args={[14, circleSegments]} />
+              <shaderMaterial
+                ref={materialRef}
+                transparent
+                premultipliedAlpha
+                depthWrite={false}
+                vertexShader={RAYMARCH_VERTEX}
+                fragmentShader={RAYMARCH_FRAGMENT}
+                uniforms={uniforms}
+              />
+            </mesh>
+          </Billboard>
         </group>
       </PresentationControls>
-
     </group>
   );
 }

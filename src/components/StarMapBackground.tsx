@@ -25,9 +25,8 @@ const StarMapBackground = () => {
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
     
-    // a11y: Respect OS settings for reduced motion
-    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    const motionMultiplier = prefersReducedMotion ? 0.3 : 1;
+
+    const motionMultiplier = 1;
 
     let animationFrameId: number;
     let particles: {x: number, y: number, rx: number, ry: number, vx: number, vy: number, radius: number, z: DepthLayer}[] = [];
@@ -42,6 +41,8 @@ const StarMapBackground = () => {
     const MAX_LINES_PER_BUCKET = 3000;
     const lineBuckets = Array.from({ length: 6 }, () => new Float32Array(MAX_LINES_PER_BUCKET * 4));
     const lineBucketCounts = new Int32Array(6);
+
+    const ALPHA_STRINGS = Array.from({ length: 19 }, (_, i) => `rgba(255, 255, 255, ${i * 0.05})`);
     
     let cachedWindowWidth = typeof window !== 'undefined' ? window.innerWidth : 1200;
     let cachedH = typeof window !== 'undefined' ? window.innerHeight : 1000;
@@ -207,16 +208,13 @@ const StarMapBackground = () => {
           ctx.moveTo(rx + radius, ry);
           ctx.arc(rx, ry, radius, 0, Math.PI * 2);
         }
-        ctx.fillStyle = `rgba(255, 255, 255, ${i * 0.05})`;
+        ctx.fillStyle = ALPHA_STRINGS[i];
         ctx.fill();
       }
 
-      // Amortize sort: only sort every 10 frames to reduce O(n log n) overhead
-      frameCount++;
-      if (frameCount % 10 === 0) {
-        // Sort by render X for efficient line drawing cutoff
-        particles.sort((a, b) => a.rx - b.rx);
-      }
+      // V8 Timsort is heavily optimized for nearly-sorted arrays.
+      // Sorting every frame prevents microscopic connection flickering and array disorder.
+      particles.sort((a, b) => a.rx - b.rx);
 
       ctx.lineWidth = 0.4;
       

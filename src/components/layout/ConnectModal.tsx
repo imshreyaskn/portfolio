@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import './ConnectModal.css';
 
@@ -15,6 +15,13 @@ const ConnectModal: React.FC<ConnectModalProps> = ({ isOpen, onClose }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
+  const mountedRef = useRef(true);
+
+  useEffect(() => {
+    return () => {
+      mountedRef.current = false;
+    };
+  }, []);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -38,6 +45,7 @@ const ConnectModal: React.FC<ConnectModalProps> = ({ isOpen, onClose }) => {
     if (botcheck) {
       setIsSuccess(true);
       setTimeout(() => {
+        if (!mountedRef.current) return;
         onClose();
         setIsSuccess(false);
       }, 2000);
@@ -75,8 +83,10 @@ const ConnectModal: React.FC<ConnectModalProps> = ({ isOpen, onClose }) => {
       if (result.success) {
         setIsSuccess(true);
         setTimeout(() => {
+          if (!mountedRef.current) return;
           onClose();
           setTimeout(() => {
+            if (!mountedRef.current) return;
             setName('');
             setFromEmail('');
             setBody('');
@@ -139,7 +149,9 @@ const ConnectModal: React.FC<ConnectModalProps> = ({ isOpen, onClose }) => {
               type="checkbox" 
               name="botcheck" 
               className="hidden" 
-              style={{ display: 'none' }} 
+              style={{ position: 'absolute', left: '-9999px', opacity: 0, height: 0, overflow: 'hidden' }}
+              tabIndex={-1}
+              autoComplete="off"
               checked={!!botcheck}
               onChange={(e) => setBotcheck(e.target.value)}
             />

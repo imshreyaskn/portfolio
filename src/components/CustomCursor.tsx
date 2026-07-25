@@ -1,23 +1,34 @@
 import { useEffect, useRef } from 'react';
 import { useIsMobile } from '../hooks/useIsMobile';
+import { setCursorPosition } from '../lib/cursorPosition';
 
+// --------------------------------------------------------
+// PHYSICS & CONFIGURATION
+// --------------------------------------------------------
 const CURSOR_CONFIG = {
   baseSize: 35,
-  springTracking: 0.15,
-  trailTracking: 0.35,
+  springTracking: 12.0, // dt-based spring constant (higher = stiffer)
+  trailTracking: 18.0,  // dt-based
   trailCount: 4,
   trailBaseSize: 22,
   trailSizeDecay: 0.7,
   trailOpacityBase: 0.4,
   trailOpacityDecay: 0.08,
   velocityStretchMax: 0.45,
-  velocityStretchFactor: 0.02,
-  velocityAngleThreshold: 1.5,
+  velocityStretchFactor: 0.0005, // scaled for dt-velocity
+  velocityAngleThreshold: 150, // dt-adjusted velocity threshold
   hoverScaleTarget: 12 / 35,
-  trailFadeVelocityMin: 15,
-  trailFadeVelocityMax: 45
+  trailFadeVelocityMin: 200, // scaled for dt-velocity
+  trailFadeVelocityMax: 800,
+  
+  // Gravity Physics
+  gravityRadius: 500,
+  eventHorizon: 100, // 100% capture radius
 };
 
+// --------------------------------------------------------
+// MATH UTILITIES
+// --------------------------------------------------------
 const shortestAngle = (target: number, current: number) => {
   let diff = target - current;
   while (diff <= -180) diff += 360;
@@ -27,17 +38,39 @@ const shortestAngle = (target: number, current: number) => {
   return diff;
 };
 
+const lerp = (start: number, end: number, t: number) => {
+  return start + (end - start) * t;
+};
+
+// Frame-independent spring damping interpolation
+const damp = (current: number, target: number, lambda: number, dt: number) => {
+  return lerp(current, target, 1 - Math.exp(-lambda * dt));
+};
+
+// --------------------------------------------------------
+// COMPONENT
+// --------------------------------------------------------
 const CustomCursor = () => {
   const cursorRef = useRef<HTMLDivElement>(null);
   const trailRefs = useRef<(HTMLDivElement | null)[]>([]);
   const isHoveringRef = useRef(false);
   const isMobile = useIsMobile();
+  
+  // Cache the Black Hole DOM Rect to avoid layout thrashing in rAF
+  const bhRectRef = useRef<{x: number, y: number, isValid: boolean}>({ x: 0, y: 0, isValid: false });
 
   useEffect(() => {
     if (isMobile) return;
 
-    let targetX = -100;
-    let targetY = -100;
+    // --------------------------------------------------------
+    // STATE
+    // --------------------------------------------------------
+    let rawX = -100;
+    let rawY = -100;
+    let lastRawX = -100;
+    let lastRawY = -100;
+    let virtualX = -100;
+    let virtualY = -100;
     let currentX = -100;
     let currentY = -100;
     
@@ -46,105 +79,217 @@ const CustomCursor = () => {
     let currentHoverScale = 1;
     let currentAngle = 0;
     
-    // Trail state
     const trailPositions = Array.from({ length: CURSOR_CONFIG.trailCount }, () => ({
       x: -100, y: -100, scaleX: 1, scaleY: 1, angle: 0
     }));
-    let prevHovering = false;
 
+    let lastTime = performance.now();
+    let frameId: number;
+
+    // --------------------------------------------------------
+    // EVENT HANDLERS
+    // --------------------------------------------------------
     const handleMouseMove = (e: MouseEvent) => {
-      targetX = e.clientX;
-      targetY = e.clientY;
+      rawX = e.clientX;
+      rawY = e.clientY;
+      if (virtualX === -100) {
+        virtualX = rawX;
+        virtualY = rawY;
+      }
     };
 
+    const HOVER_SELECTOR = 'a, button, [role="button"], [data-hoverable], input, textarea';
+
     const handleMouseOver = (e: MouseEvent) => {
-      const target = e.target as HTMLElement;
-      if (target.closest('a, button, [role="button"], input, select, textarea')) {
+      const target = e.target as HTMLElement | null;
+      if (!target || !target.closest) return;
+      if (target.closest(HOVER_SELECTOR)) {
         isHoveringRef.current = true;
       }
     };
 
     const handleMouseOut = (e: MouseEvent) => {
-      // We only care when the mouse leaves an interactive element and goes to a non-interactive one.
-      // relatedTarget is the element the mouse is entering.
       const relatedTarget = e.relatedTarget as HTMLElement | null;
-      if (!relatedTarget || !relatedTarget.closest('a, button, [role="button"], input, select, textarea')) {
+      if (!relatedTarget || !relatedTarget.closest || !relatedTarget.closest(HOVER_SELECTOR)) {
         isHoveringRef.current = false;
+      }
+    };
+
+    const handleMouseLeave = () => {
+      setCursorPosition(0, 0, false);
+    };
+
+    // Throttled/Debounced Rect Cacher
+    let resizeTimeout: ReturnType<typeof setTimeout>;
+    const updateBhRect = () => {
+      const bhEl = (document.querySelector('.saturn-glow') || document.querySelector('.projects-canvas-wrapper')) as HTMLElement;
+      if (bhEl) {
+        const rect = bhEl.getBoundingClientRect();
+        if (rect.width > 0) {
+          // Store ABSOLUTE document coordinates to avoid reflows on scroll
+          bhRectRef.current = {
+            x: rect.left + window.scrollX + rect.width / 2,
+            y: rect.top + window.scrollY + rect.height / 2,
+            isValid: true
+          };
+          return true;
+        }
+      }
+      bhRectRef.current.isValid = false;
+      return false;
+    };
+
+    const handleResize = () => {
+      clearTimeout(resizeTimeout);
+      resizeTimeout = setTimeout(updateBhRect, 50);
+    };
+
+    // Extremely cheap scroll listener: only polls DOM if we haven't found the black hole yet (lazy loading fix)
+    let scrollTimeout: ReturnType<typeof setTimeout>;
+    const handleScroll = () => {
+      if (!bhRectRef.current.isValid) {
+        clearTimeout(scrollTimeout);
+        scrollTimeout = setTimeout(updateBhRect, 100);
       }
     };
 
     window.addEventListener('mousemove', handleMouseMove, { passive: true });
     document.addEventListener('mouseover', handleMouseOver, { passive: true });
     document.addEventListener('mouseout', handleMouseOut, { passive: true });
+    document.addEventListener('mouseleave', handleMouseLeave, { passive: true });
+    window.addEventListener('resize', handleResize, { passive: true });
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    
+    // Initial fetch
+    setTimeout(updateBhRect, 100);
 
-    let frameId: number;
+    // --------------------------------------------------------
+    // RENDER LOOP (World Class Physics Engine)
+    // --------------------------------------------------------
+    let lastHoverApplied = false;
+    
+    const animate = (time: number) => {
+      // 1. Time Update (Delta Time)
+      const dt = Math.min((time - lastTime) / 1000, 0.1); // Cap dt at 100ms to prevent massive jumps
+      lastTime = time;
 
-    const animate = () => {
-      const dx = targetX - currentX;
-      const dy = targetY - currentY;
-      const velocitySq = dx * dx + dy * dy;
-      
+      // 2. Hardware Mouse Velocity
+      let rawVelocity = 0;
+      if (lastRawX !== -100) {
+        const rawDx = rawX - lastRawX;
+        const rawDy = rawY - lastRawY;
+        rawVelocity = Math.sqrt(rawDx * rawDx + rawDy * rawDy) / (dt || 0.016);
+      }
+      lastRawX = rawX;
+      lastRawY = rawY;
+
+      const isMoving = rawVelocity > 30.0; // px/s
       const hovering = isHoveringRef.current;
-      const targetHoverScale = hovering ? CURSOR_CONFIG.hoverScaleTarget : 1;
 
-      // Idle bail-out: If everything is stationary, sleep this frame to save CPU
-      if (velocitySq < 0.001 && Math.abs(currentHoverScale - targetHoverScale) < 0.001 && hovering === prevHovering) {
-        let trailsSettled = true;
-        for (let i = 0; i < CURSOR_CONFIG.trailCount; i++) {
-          const tdx = currentX - trailPositions[i].x;
-          const tdy = currentY - trailPositions[i].y;
-          if (tdx * tdx + tdy * tdy > 0.1) {
-            trailsSettled = false;
-            break;
+      // 3. Mouse Tether (Spring virtualX towards rawX)
+      // When hovering an interactive element/planet, virtualX instantly snaps to rawX
+      // so there is ZERO gravitational drift or pull lag over planets!
+      if (hovering) {
+        virtualX = rawX;
+        virtualY = rawY;
+      } else if (virtualX !== -100) {
+        const mdx = rawX - virtualX;
+        const mdy = rawY - virtualY;
+        const tetherK = isMoving ? 15.0 : 1.5; 
+        virtualX += mdx * tetherK * dt;
+        virtualY += mdy * tetherK * dt;
+      }
+
+      // 4. Calculate Forces & Targets (Disabled completely when hovering planets/buttons)
+      let targetX = virtualX;
+      let targetY = virtualY;
+      let blackHoleSuctionFactor = 1.0;
+
+      if (bhRectRef.current.isValid && virtualX !== -100 && !hovering) {
+        // Convert absolute document coordinates back to current viewport coordinates (no reflow trap)
+        const currentBhViewportX = bhRectRef.current.x - window.scrollX;
+        const currentBhViewportY = bhRectRef.current.y - window.scrollY;
+
+        const gdx = currentBhViewportX - virtualX;
+        const gdy = currentBhViewportY - virtualY;
+        const dist = Math.sqrt(gdx * gdx + gdy * gdy);
+        
+        if (dist < CURSOR_CONFIG.gravityRadius) {
+          const norm = dist / CURSOR_CONFIG.gravityRadius;
+          
+          let pullSpeed = 3500 * Math.pow(1.0 - norm, 7.0); // pixels per second drift
+          if (isMoving) {
+            pullSpeed *= 0.5; // Reduce gravity strength to 50% when in motion
           }
-        }
-        if (trailsSettled) {
-          frameId = requestAnimationFrame(animate);
-          return;
+          
+          if (dist < CURSOR_CONFIG.eventHorizon) {
+             // 100% swallowed into the singularity
+             virtualX = currentBhViewportX;
+             virtualY = currentBhViewportY;
+             blackHoleSuctionFactor = 0.05; 
+          } else {
+             // Actively pull the virtual mouse
+             virtualX += (gdx / dist) * pullSpeed * dt;
+             virtualY += (gdy / dist) * pullSpeed * dt;
+             
+             // Spaghettification (Scale down as it approaches singularity)
+             blackHoleSuctionFactor = Math.max(0.05, Math.min(1.0, norm * 2.0));
+          }
+
+          targetX = virtualX;
+          targetY = virtualY;
         }
       }
 
-      currentX += dx * CURSOR_CONFIG.springTracking;
-      currentY += dy * CURSOR_CONFIG.springTracking;
-      const velocity = Math.sqrt(velocitySq);
+      // 3. Integrate Main Cursor Physics
+      currentX = damp(currentX, targetX, CURSOR_CONFIG.springTracking, dt);
+      currentY = damp(currentY, targetY, CURSOR_CONFIG.springTracking, dt);
       
+      setCursorPosition(currentX, currentY, !hovering && virtualX !== -100);
+      
+      const dx = targetX - currentX;
+      const dy = targetY - currentY;
+      
+      // Velocity mapped per second (frame independent)
+      const velocity = Math.sqrt(dx * dx + dy * dy) / (dt || 0.016);
+      
+      const baseTargetHoverScale = hovering ? CURSOR_CONFIG.hoverScaleTarget : 1;
+      const targetHoverScale = baseTargetHoverScale * blackHoleSuctionFactor;
+
       const stretch = Math.min(velocity * CURSOR_CONFIG.velocityStretchFactor, CURSOR_CONFIG.velocityStretchMax);
       const targetScaleX = 1 + stretch;
       const targetScaleY = 1 - (stretch * 0.4);
 
-      currentScaleX += (targetScaleX - currentScaleX) * 0.2;
-      currentScaleY += (targetScaleY - currentScaleY) * 0.2;
+      currentScaleX = damp(currentScaleX, targetScaleX, 15.0, dt);
+      currentScaleY = damp(currentScaleY, targetScaleY, 15.0, dt);
 
       if (velocity > CURSOR_CONFIG.velocityAngleThreshold) {
         const targetAngle = Math.atan2(dy, dx) * (180 / Math.PI);
         const diff = shortestAngle(targetAngle, currentAngle);
-        currentAngle += diff * 0.25; 
+        currentAngle += diff * (dt * 15.0); 
       }
 
+      currentHoverScale = damp(currentHoverScale, targetHoverScale, 15.0, dt);
+
+      // 4. Render Main Cursor
       if (cursorRef.current) {
-        currentHoverScale += (targetHoverScale - currentHoverScale) * 0.2;
-        
         const finalScaleX = currentScaleX * currentHoverScale;
         const finalScaleY = currentScaleY * currentHoverScale;
-        
         const size = CURSOR_CONFIG.baseSize;
         
-        const isSettled = velocitySq < 0.001 && 
-                          Math.abs(currentHoverScale - targetHoverScale) < 0.001 && 
-                          Math.abs(currentScaleX - targetScaleX) < 0.001;
-
-        if (!isSettled || hovering !== cursorRef.current.classList.contains('hovering')) {
-          const transform = hovering 
-            ? `translate3d(${currentX - size/2}px, ${currentY - size/2}px, 0) rotate(0deg) scale(${currentHoverScale}, ${currentHoverScale})`
-            : `translate3d(${currentX - size/2}px, ${currentY - size/2}px, 0) rotate(${currentAngle}deg) scale(${finalScaleX}, ${finalScaleY})`;
-          
+        const transform = hovering 
+          ? `translate3d(${(currentX - size/2).toFixed(2)}px, ${(currentY - size/2).toFixed(2)}px, 0) scale(${currentHoverScale.toFixed(2)}, ${currentHoverScale.toFixed(2)})`
+          : `translate3d(${(currentX - size/2).toFixed(2)}px, ${(currentY - size/2).toFixed(2)}px, 0) rotate(${currentAngle.toFixed(2)}deg) scale(${finalScaleX.toFixed(2)}, ${finalScaleY.toFixed(2)})`;
+        
+        if (cursorRef.current.style.transform !== transform) {
           cursorRef.current.style.transform = transform;
-          if (hovering !== cursorRef.current.classList.contains('hovering')) {
-            cursorRef.current.classList.toggle('hovering', hovering);
-          }
+        }
+        if (hovering !== lastHoverApplied) {
+          cursorRef.current.classList.toggle('hovering', hovering);
+          lastHoverApplied = hovering;
         }
         
-        // Update trails
+        // 5. Integrate & Render Trails
         let prevX = currentX;
         let prevY = currentY;
         
@@ -153,22 +298,21 @@ const CustomCursor = () => {
           const tx = prevX;
           const ty = prevY;
           
-          tp.x += (tx - tp.x) * CURSOR_CONFIG.trailTracking;
-          tp.y += (ty - tp.y) * CURSOR_CONFIG.trailTracking;
+          tp.x = damp(tp.x, tx, CURSOR_CONFIG.trailTracking, dt);
+          tp.y = damp(tp.y, ty, CURSOR_CONFIG.trailTracking, dt);
           
-          const dx = tx - tp.x;
-          const dy = ty - tp.y;
-          const tVelocity = Math.sqrt(dx*dx + dy*dy);
+          const tdx = tx - tp.x;
+          const tdy = ty - tp.y;
+          const tVelocity = Math.sqrt(tdx*tdx + tdy*tdy) / (dt || 0.016);
           
-          // Higher stretch factor than the main cursor for a "smear" effect
-          const stretch = Math.min(tVelocity * 0.04, i === 0 ? 0.8 : 0.5); 
-          tp.scaleX = 1 + stretch;
-          tp.scaleY = 1 - (stretch * 0.3);
+          const tStretch = Math.min(tVelocity * 0.001, i === 0 ? 0.8 : 0.5); 
+          tp.scaleX = 1 + tStretch;
+          tp.scaleY = 1 - (tStretch * 0.3);
           
-          if (tVelocity > 0.5) {
-             const targetAngle = Math.atan2(dy, dx) * (180 / Math.PI);
+          if (tVelocity > 50) {
+             const targetAngle = Math.atan2(tdy, tdx) * (180 / Math.PI);
              const diff = shortestAngle(targetAngle, tp.angle);
-             tp.angle += diff * 0.4;
+             tp.angle += diff * (dt * 20.0);
           }
           
           prevX = tp.x;
@@ -177,13 +321,12 @@ const CustomCursor = () => {
           const el = trailRefs.current[i];
           if (el) {
             const trailSize = Math.max(5, Math.round(CURSOR_CONFIG.trailBaseSize * Math.pow(CURSOR_CONFIG.trailSizeDecay, i)));
-            const transform = hovering 
+            const tTransform = hovering 
               ? `translate3d(${tp.x - trailSize/2}px, ${tp.y - trailSize/2}px, 0) scale(0)`
               : `translate3d(${tp.x - trailSize/2}px, ${tp.y - trailSize/2}px, 0) rotate(${tp.angle}deg) scale(${tp.scaleX}, ${tp.scaleY})`;
               
-            // Epsilon check to prevent unnecessary DOM writes
-            if (el.style.transform !== transform) {
-              el.style.transform = transform;
+            if (el.style.transform !== tTransform) {
+              el.style.transform = tTransform;
             }
             
             let dynamicOpacity = 0;
@@ -203,7 +346,6 @@ const CustomCursor = () => {
             }
           }
         }
-        prevHovering = hovering;
       }
 
       frameId = requestAnimationFrame(animate);
@@ -215,6 +357,10 @@ const CustomCursor = () => {
       window.removeEventListener('mousemove', handleMouseMove);
       document.removeEventListener('mouseover', handleMouseOver);
       document.removeEventListener('mouseout', handleMouseOut);
+      window.removeEventListener('resize', handleResize);
+      window.removeEventListener('scroll', handleScroll);
+      clearTimeout(resizeTimeout);
+      clearTimeout(scrollTimeout);
       cancelAnimationFrame(frameId);
     };
   }, [isMobile]);
@@ -277,4 +423,3 @@ const CustomCursor = () => {
 };
 
 export default CustomCursor;
-

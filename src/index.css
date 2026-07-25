@@ -158,24 +158,28 @@ h3       { font-size: var(--fs-h3); letter-spacing: -0.01em; line-height: 1.25; 
 
 /* LAYOUT */
 .container {
-  max-width: 1280px;
-  padding: 0 80px;
+  /* Fluid container scaling: smoothly grows from 1280px base up to 3600px on 4K */
+  max-width: clamp(1280px, 82vw, 3600px);
+  /* Fluid padding: smoothly scales from mobile (20px) to 4K (160px) */
+  padding: 0 clamp(20px, 6vw, 160px);
   margin: 0 auto;
   display: grid;
   grid-template-columns: repeat(12, 1fr);
-  gap: 24px;
+  gap: clamp(16px, 2vw, 32px);
   position: relative;
   z-index: 10;
 }
 
 @media (max-width: 1279px) {
-  .container { padding: 0 40px; grid-template-columns: repeat(8, 1fr); }
+  .container { grid-template-columns: repeat(8, 1fr); }
 }
-
 
 @media (max-width: 767px) {
-  .container { padding: 0 20px; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+  .container { grid-template-columns: repeat(4, 1fr); }
 }
+
+/* High-Density 2K / 4K Displays */
+/* Fluid layout already handles sizing, preserving this space if future overrides are needed */
 
 .text-accent { color: var(--accent); }
 .text-secondary { color: var(--text-secondary); }
@@ -183,27 +187,26 @@ h3       { font-size: var(--fs-h3); letter-spacing: -0.01em; line-height: 1.25; 
 /* Subtle Silver Glow Text Animation */
 .silver-glow-text {
   background: linear-gradient(
-    90deg, 
-    rgba(255, 255, 255, 0.4) 0%, 
-    #ffffff 40%, 
-    #ffffff 60%, 
-    rgba(255, 255, 255, 0.4) 100%
+    110deg,
+    rgba(255, 255, 255, 0.4) 15%,
+    #ffffff 50%,
+    rgba(255, 255, 255, 0.4) 85%
   );
-  background-size: 200% auto;
+  background-size: 200% 100%;
   color: transparent;
   -webkit-background-clip: text;
   background-clip: text;
-  animation: textShine var(--shimmer-duration) linear infinite;
+  -webkit-text-fill-color: transparent;
+  animation: textShine var(--shimmer-duration, 6s) linear infinite;
   display: inline-block;
-  /* Hint the browser to promote this element to its own compositor layer.
-     background-position is not GPU-composited by default; will-change allows
-     the browser to pre-allocate a layer and reduce paint invalidation cost. */
-  will-change: background-position;
 }
 
 @keyframes textShine {
-  to {
-    background-position: -200% center;
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
   }
 }
 
@@ -251,15 +254,11 @@ h3       { font-size: var(--fs-h3); letter-spacing: -0.01em; line-height: 1.25; 
   justify-content: center;
   gap: 8px;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
-  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.3s cubic-bezier(0.16, 1, 0.3, 1), background-color 0.3s ease;
   cursor: none;
 }
 
-@property --btn-angle {
-  syntax: '<angle>';
-  initial-value: 45deg;
-  inherits: false;
-}
+/* Removed @property --btn-angle to prevent CPU paint thrashing */
 
 .framer-button::before {
   content: "";
@@ -281,7 +280,7 @@ h3       { font-size: var(--fs-h3); letter-spacing: -0.01em; line-height: 1.25; 
   -webkit-mask-composite: source-out;
   mask-composite: exclude;
   pointer-events: none;
-  transition: all 0.3s ease, --btn-angle 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: background-color 0.3s ease;
 }
 
 .framer-button:hover {
@@ -290,7 +289,13 @@ h3       { font-size: var(--fs-h3); letter-spacing: -0.01em; line-height: 1.25; 
 }
 
 .framer-button:hover::before {
-  --btn-angle: 225deg;
+  background: linear-gradient(
+    225deg,
+    rgba(255, 255, 255, 0.9) 0%,
+    rgba(255, 255, 255, 0.05) 30%,
+    rgba(255, 255, 255, 0.05) 70%,
+    rgba(255, 255, 255, 0.9) 100%
+  );
 }
 
 /* ─── ACCESSIBILITY ─────────────────────────────────────── */
@@ -315,4 +320,11 @@ h3       { font-size: var(--fs-h3); letter-spacing: -0.01em; line-height: 1.25; 
 .liquid-cursor.hovering {
   animation: none;
   border-radius: 50%;
+}
+
+
+
+html.is-locked,
+html.is-locked body {
+  overflow: hidden;
 }

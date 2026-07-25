@@ -1,14 +1,39 @@
+/* ═══════════════════════════════════════════════════════════════════
+   EXPERIENCE SECTION
+   Breakpoints:
+     • Base: mobile-first (< 768px)
+     • sm:  768px+  (tablet)
+     • md:  1024px+ (desktop / 1080p target)
+     • xl:  1920px+ (2K / 4K)
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* ─── Custom Properties ─── */
 .experience-wrapper {
+  --exp-moon-size: 8vh;
+  --exp-moon-gap: 7vh;
+  --exp-label-size: 0.68rem;
+  --exp-label-spacing: 0.08em;
+  --exp-label-offset: 2.2rem;
+  --exp-panel-pad: 1.25rem 1.25rem 2.5rem;
+  --exp-panel-title-size: 0.95rem;
+  --exp-panel-role-size: 1rem;
+  --exp-panel-bullet-size: 0.88rem;
+  --exp-panel-bullet-gap: 16px;
+  --exp-panel-header-mb: 1rem;
+  --exp-panel-header-pt: 1.5rem;
+
   position: relative;
   width: 100%;
-  height: 600vh; /* Increased height significantly slows down the scroll animation speed */
+  /* Height set via inline style from useSpaceshipAnimation (responsive) */
   z-index: 10;
   content-visibility: auto;
-  contain-intrinsic-size: 600vh;
+  contain-intrinsic-size: auto 600vh;
 }
 
+/* ─── Sticky Section ─── */
 .experience-section {
   width: 100%;
+  height: 100vh;
   height: 100dvh;
   position: sticky;
   top: 0;
@@ -17,8 +42,20 @@
   align-items: center;
   justify-content: center;
   background-color: transparent;
+  overflow: hidden; /* prevent horizontal bleed from panel slides */
 }
 
+/* ─── Shift Wrapper (moons + spaceship) ─── */
+.experience-shift-wrapper {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+/* ─── Spaceship ─── */
 .spaceship {
   position: absolute;
   left: 50%;
@@ -29,49 +66,82 @@
   align-items: center;
   justify-content: center;
   z-index: 20;
-  will-change: transform, filter;
+  /* will-change applied only during animation via framer-motion inline style */
 }
 
+/* ─── Moon Cluster ─── */
 .moon-images-container {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 10vh;
+  gap: var(--exp-moon-gap);
+}
+
+.moon-item {
+  position: relative;
 }
 
 .moon-image {
-  height: 10vh;
+  height: var(--exp-moon-size);
   width: auto;
   max-width: 80vw;
   object-fit: contain;
-  transition: transform 0.8s cubic-bezier(0.16, 1, 0.3, 1), filter 0.8s ease;
+  transition:
+    transform 0.8s cubic-bezier(0.16, 1, 0.3, 1),
+    filter 0.8s ease;
+  cursor: pointer;
 }
 
 .moon-image:hover {
   transform: scale(1.05);
 }
 
+/* Focus: visible ring for keyboard, none for pointer */
 .moon-image:focus {
   outline: none;
 }
 
 .moon-image:focus-visible {
-  outline: 2px solid rgba(255, 255, 255, 0.3);
+  outline: 2px solid rgba(255, 255, 255, 0.5);
   outline-offset: 4px;
+  border-radius: 50%;
 }
 
+/* ─── Moon Glow Variants ─── */
+.glow-full {
+  filter: drop-shadow(0 0 15px rgba(255, 255, 255, 0.25));
+}
+.glow-full:hover {
+  filter: drop-shadow(0 0 30px rgba(255, 255, 255, 0.45));
+}
+
+.glow-bottom {
+  filter: drop-shadow(0 15px 20px rgba(255, 255, 255, 0.25));
+}
+.glow-bottom:hover {
+  filter: drop-shadow(0 25px 35px rgba(255, 255, 255, 0.45));
+}
+
+.glow-bottom-right {
+  filter: drop-shadow(12px 12px 20px rgba(255, 255, 255, 0.25));
+}
+.glow-bottom-right:hover {
+  filter: drop-shadow(20px 20px 35px rgba(255, 255, 255, 0.45));
+}
+
+/* ─── Floating Labels ─── */
 .experience-label {
   position: absolute;
   top: 50%;
   font-family: 'Jost', sans-serif;
-  font-size: 1.5rem;
+  font-size: var(--exp-label-size);
   font-weight: 300;
   text-transform: uppercase;
   color: var(--text-primary);
   white-space: nowrap;
   pointer-events: none;
   text-shadow: 0 0 20px rgba(255, 255, 255, 0.3);
-  letter-spacing: 0.2em;
+  letter-spacing: var(--exp-label-spacing);
 }
 
 .experience-label.right {
@@ -82,6 +152,7 @@
   right: calc(100% + clamp(32px, 4vw, 80px));
 }
 
+/* ─── Details Panel ─── */
 .experience-panel {
   position: absolute;
   top: 50%;
@@ -90,47 +161,48 @@
   max-width: 620px;
   height: max-content;
   max-height: 80vh;
-  /* overflow removed so absolute floating header isn't clipped */
   background: rgba(0, 0, 0, 0.65);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
-  z-index: 100;
+  z-index: 40;
   padding: 50px 30px;
   display: flex;
   flex-direction: column;
   color: rgba(255, 255, 255, 0.9);
   box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
   contain: layout style;
-  will-change: transform;
 }
 
-/* Custom scrollbar for panels */
-.experience-panel::-webkit-scrollbar,
-.panel-content::-webkit-scrollbar {
-  width: 6px;
-}
-.experience-panel::-webkit-scrollbar-track,
-.panel-content::-webkit-scrollbar-track {
-  background: rgba(255, 255, 255, 0.05);
-  border-radius: 4px;
-}
-.experience-panel::-webkit-scrollbar-thumb,
-.panel-content::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.2);
-  border-radius: 4px;
-}
-.experience-panel::-webkit-scrollbar-thumb:hover,
-.panel-content::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.3);
-}
-
-.panel-content {
-  overflow-y: auto;
-  overscroll-behavior: contain;
-  min-height: 0;
-  padding-right: 8px; /* buffer for scrollbar */
+/* Animated border glow */
+.experience-panel::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  padding: 1.5px;
+  background: linear-gradient(
+    45deg,
+    rgba(255, 255, 255, 0.9) 0%,
+    rgba(255, 255, 255, 0.05) 30%,
+    rgba(255, 255, 255, 0.05) 70%,
+    rgba(255, 255, 255, 0.9) 100%
+  );
+  -webkit-mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  -webkit-mask-composite: source-out;
+  mask-composite: exclude;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 1.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
+/* Border fades in when panel is visible (driven by framer-motion animate) */
+.experience-panel[style*='opacity: 1']::before,
+.experience-panel:not([style*='opacity: 0'])::before {
+  opacity: 1;
+}
+
+/* Panel positioning */
 .experience-panel.panel-left {
   left: 5vw;
 }
@@ -139,36 +211,7 @@
   right: 5vw;
 }
 
-@property --panel-angle {
-  syntax: '<angle>';
-  initial-value: 45deg;
-  inherits: false;
-}
-
-.experience-panel::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  padding: 1.5px;
-  --panel-angle: 45deg;
-  background: linear-gradient(
-    var(--panel-angle),
-    rgba(255, 255, 255, 0.9) 0%,
-    rgba(255, 255, 255, 0.05) 30%,
-    rgba(255, 255, 255, 0.05) 70%,
-    rgba(255, 255, 255, 0.9) 100%
-  );
-  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-  -webkit-mask-composite: source-out;
-  mask-composite: exclude;
-  pointer-events: none;
-  transition: --panel-angle 1.2s cubic-bezier(0.16, 1, 0.3, 1) 0.3s;
-}
-
-.experience-panel.active::before {
-  --panel-angle: 225deg;
-}
-
+/* ─── Panel Header ─── */
 .panel-floating-header {
   position: relative;
   display: flex;
@@ -183,18 +226,25 @@
   background: transparent;
   border: none;
   color: white;
-  padding: 10px;
+  padding: 14px;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
   opacity: 0.7;
   transition: opacity 0.3s ease, transform 0.3s ease;
+  min-height: 44px;
+  min-width: 44px;
 }
 
 .panel-close-btn:hover {
   opacity: 1;
   transform: translateX(-5px);
+}
+
+.panel-close-btn:focus-visible {
+  outline: 2px solid rgba(255, 255, 255, 0.6);
+  outline-offset: 2px;
 }
 
 .panel-floating-title {
@@ -206,6 +256,14 @@
   margin: 0;
   text-shadow: 0 0 20px rgba(255, 255, 255, 0.3);
   color: rgba(255, 255, 255, 0.9);
+}
+
+/* ─── Panel Content ─── */
+.panel-content {
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  min-height: 0;
+  padding-right: 8px;
 }
 
 .panel-meta {
@@ -236,7 +294,6 @@
   font-weight: 300;
   color: rgba(255, 255, 255, 0.5);
 }
-
 
 .panel-duration {
   opacity: 0.8;
@@ -273,7 +330,7 @@
 }
 
 .panel-bullets li::before {
-  content: "";
+  content: '';
   position: absolute;
   left: 0;
   top: 10px;
@@ -285,53 +342,56 @@
   opacity: 0.8;
 }
 
-.glow-full {
-  filter: drop-shadow(0 0 15px rgba(255, 255, 255, 0.25));
-}
-.glow-full:hover {
-  filter: drop-shadow(0 0 30px rgba(255, 255, 255, 0.45));
+/* ─── Custom Scrollbar ─── */
+.panel-content::-webkit-scrollbar {
+  width: 6px;
 }
 
-.glow-bottom {
-  filter: drop-shadow(0 15px 20px rgba(255, 255, 255, 0.25));
-}
-.glow-bottom:hover {
-  filter: drop-shadow(0 25px 35px rgba(255, 255, 255, 0.45));
+.panel-content::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 4px;
 }
 
-.glow-bottom-right {
-  filter: drop-shadow(12px 12px 20px rgba(255, 255, 255, 0.25));
-}
-.glow-bottom-right:hover {
-  filter: drop-shadow(20px 20px 35px rgba(255, 255, 255, 0.45));
+.panel-content::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
 }
 
+.panel-content::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
 
+/* ═══════════════════════════════════════════════════════════════════
+   RESPONSIVE LAYERS
+   ═══════════════════════════════════════════════════════════════════ */
 
-/* ─── MOBILE ─────────────────────────────────────────────────────────────── */
+/* ─── Mobile (< 768px) ─── */
 @media (max-width: 767px) {
-  /* Prevent horizontal bleed when panels slide in/out */
-  .experience-section {
-    overflow: hidden;
+  .experience-wrapper {
+    --exp-moon-size: 8vh;
+    --exp-moon-gap: 7vh;
+    --exp-label-size: 0.68rem;
+    --exp-label-spacing: 0.08em;
+    --exp-label-offset: 2.2rem;
+    --exp-panel-pad: 1.25rem 1.25rem 2.5rem;
+    --exp-panel-title-size: 0.95rem;
+    --exp-panel-role-size: 1rem;
+    --exp-panel-bullet-size: 0.88rem;
+    --exp-panel-bullet-gap: 16px;
+    --exp-panel-header-mb: 1rem;
+    --exp-panel-header-pt: 1.5rem;
   }
 
-  /* Smaller moon images */
   .moon-image {
-    height: 8vh;
     min-height: 48px;
   }
 
-  .moon-images-container {
-    gap: 7vh;
-  }
-
-  /* Labels: centred below each moon, ensure they don't clip into siblings */
+  /* Labels: centered below each moon */
   .experience-label {
     top: auto;
-    bottom: -2.2rem;
-    font-size: 0.68rem;
-    letter-spacing: 0.08em;
-    white-space: nowrap;
+    bottom: calc(-1 * var(--exp-label-offset));
+    font-size: var(--exp-label-size);
+    letter-spacing: var(--exp-label-spacing);
   }
 
   .experience-label.right,
@@ -341,75 +401,116 @@
     transform: translateX(-50%);
   }
 
-  /* Panel — starts below safe area + orb zone, with side margins */
+  /* Panel: full-width, below safe area + orb zone */
   .experience-panel {
-    position: absolute;
-    top: calc(env(safe-area-inset-top, 0px) + 100px) !important;
-    left: 15px !important;
-    right: 15px !important;
-    width: calc(100% - 30px) !important;
+    top: calc(env(safe-area-inset-top, 0px) + 100px);
+    left: 15px;
+    right: 15px;
+    width: calc(100% - 30px);
     min-width: unset;
     max-width: unset;
-    /* Use dvh so panel height is correct even with address bar */
     height: calc(100dvh - env(safe-area-inset-top, 0px) - 115px);
-    min-height: unset;
-    overflow-y: auto;
+    padding: var(--exp-panel-pad);
     -webkit-overflow-scrolling: touch;
-    overscroll-behavior: contain;
-    padding: 1.25rem 1.25rem 2.5rem;
-    border-radius: 0;
-    background: rgba(0, 0, 0, 0.65);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
   }
 
-  .experience-panel::before {
-    border-radius: 0;
+  .experience-panel.panel-left,
+  .experience-panel.panel-right {
+    left: 15px;
+    right: 15px;
   }
 
   .panel-floating-header {
-    padding-top: 1.5rem;
-    margin-bottom: 1rem;
+    padding-top: var(--exp-panel-header-pt);
+    margin-bottom: var(--exp-panel-header-mb);
   }
 
   .panel-floating-title {
-    font-size: 0.95rem;
+    font-size: var(--exp-panel-title-size);
   }
 
   .panel-role {
-    font-size: 1rem;
+    font-size: var(--exp-panel-role-size);
+  }
+
+  .panel-bullets {
+    gap: var(--exp-panel-bullet-gap);
   }
 
   .panel-bullets li {
-    font-size: 0.88rem;
+    font-size: var(--exp-panel-bullet-size);
     padding-left: 20px;
-    gap: 16px;
   }
 
-  /* Back / close button — larger tap area on mobile */
   .panel-close-btn {
     padding: 12px;
     touch-action: manipulation;
   }
 }
 
-/* Very short phones (landscape / SE) */
+/* ─── Short mobile viewports (landscape, SE) ─── */
 @media (max-width: 767px) and (max-height: 700px) {
-  .experience-panel {
-    padding: 0.75rem 1rem 2rem;
+  .experience-wrapper {
+    --exp-panel-pad: 0.75rem 1rem 2rem;
+    --exp-panel-bullet-size: 0.82rem;
+    --exp-panel-bullet-gap: 14px;
   }
 
   .panel-meta {
     margin-bottom: 16px;
   }
 
-  .panel-bullets {
-    gap: 14px;
-  }
-
   .panel-bullets li {
-    font-size: 0.82rem;
     line-height: 1.5;
   }
 }
+
+/* ─── Tablet (768px – 1366px) ─── */
+@media (min-width: 768px) and (max-width: 1366px) {
+  .experience-panel {
+    width: clamp(280px, 32vw, 500px);
+  }
+
+  .experience-panel.panel-left {
+    left: 3vw;
+  }
+
+  .experience-panel.panel-right {
+    right: 3vw;
+  }
+}
+
+/* ─── Desktop / 1080p Target (1024px+) ─── */
+@media (min-width: 1024px) {
+  .experience-wrapper {
+    --exp-moon-size: 10vh;
+    --exp-moon-gap: 10vh;
+    --exp-label-size: 1.5rem;
+    --exp-label-spacing: 0.2em;
+  }
+}
+
+/* ─── 2K / 4K (1920px+) ─── */
+@media (min-width: 1920px) {
+  .experience-wrapper {
+    --exp-label-size: clamp(1.5rem, 1.2vw, 2.2rem);
+  }
+
+  .panel-floating-title {
+    font-size: clamp(1.2rem, 1.2vw, 2rem);
+  }
+
+  .panel-role {
+    font-size: clamp(1.4rem, 1.1vw, 2rem);
+  }
+
+  .panel-bullets li {
+    font-size: clamp(1.05rem, 0.8vw + 0.5rem, 1.4rem);
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   ACCESSIBILITY
+   ═══════════════════════════════════════════════════════════════════ */
+
+

@@ -28,17 +28,29 @@
   height: 90px;
   background: #000;
   border-radius: 50%;
-  /* Glow behind the black hole, creating an eclipse effect */
-  box-shadow: 0 0 40px 15px rgba(255, 255, 255, 0.8), 0 0 80px 30px rgba(255, 240, 150, 0.15);
+  box-shadow: 
+    0 0 40px 15px rgba(255, 255, 255, 0.8), 
+    0 0 80px 30px rgba(255, 240, 150, 0.15);
   z-index: 10;
+  /* Promote to its own layer ONCE, not every frame */
+  will-change: transform;
+}
+
+/* CRITICAL: Remove box-shadow during implosion to prevent repaint storms */
+.event-horizon.imploding {
+  box-shadow: none;
 }
 
 /* Base style for rings */
-.accretion-disk, .accretion-disk-inner, .accretion-disk-outer {
+.accretion-disk,
+.accretion-disk-inner,
+.accretion-disk-outer {
   position: absolute;
   border-radius: 50%;
   border-style: solid;
   border-color: transparent;
+  /* Promote to GPU layers during boot */
+  will-change: transform, opacity;
 }
 
 .accretion-disk {
@@ -75,4 +87,29 @@
   color: rgba(255, 255, 255, 0.5);
   text-transform: uppercase;
   z-index: 20;
+  animation: text-pulse 2s ease-in-out infinite;
+}
+
+@keyframes text-pulse {
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 0.8; }
+}
+
+@media (max-width: 500px) {
+  .black-hole-container {
+    width: 80vw;
+    height: 80vw;
+  }
+  .accretion-disk-outer {
+    width: 76vw;
+    height: 76vw;
+  }
+  .accretion-disk {
+    width: 56vw;
+    height: 56vw;
+  }
+  .accretion-disk-inner {
+    width: 36vw;
+    height: 36vw;
+  }
 }

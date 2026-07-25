@@ -1,132 +1,208 @@
-import { useEffect } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { motion, useAnimation } from 'framer-motion';
+import { useReadiness } from '../../lib/useReadiness';
 import './LoadingScreen.css';
 
 interface LoadingScreenProps {
-  onComplete: () => void;
+  onReveal: () => void;
+  onDone: () => void;
 }
 
-const LoadingScreen = ({ onComplete }: LoadingScreenProps) => {
+const LoadingScreen = ({ onReveal, onDone }: LoadingScreenProps) => {
   const controls = useAnimation();
+  const { ready, progress } = useReadiness();
+  const [isImploding, setIsImploding] = useState(false);
+  const [showProgress, setShowProgress] = useState(true);
+  const doneFired = useRef(false);
+  const revealFired = useRef(false);
+
+  // Start the infinite spin immediately on mount
+  useEffect(() => {
+    controls.start('visible');
+  }, [controls]);
+
+  // Throttle progress text updates to ~10fps instead of 60fps
+  // This prevents LoadingScreen from re-rendering every frame
+  const progressRef = useRef(progress);
+  useEffect(() => {
+    progressRef.current = progress;
+  }, [progress]);
 
   useEffect(() => {
-    document.body.style.overflow = 'hidden';
-    document.documentElement.style.overflow = 'hidden';
+    if (!showProgress) return;
+    const interval = setInterval(() => {
+      // Force a re-render only for the text, not the whole component
+      setShowProgress((prev) => prev); // no-op, but we read progressRef in render
+    }, 100);
+    return () => clearInterval(interval);
+  }, [showProgress]);
 
-    const runAnimation = async () => {
-      // 1. Initial spin and build up (Don't await, because rotateZ loops infinitely)
-      controls.start('visible');
-      
-      // 2. Wait for the initial animations to finish (longest is 1.8s) + a short pause (800ms)
-      await new Promise(resolve => setTimeout(resolve, 2600));
-      
-      // 3. Implosion effect
+  // Watch for the readiness gate to pass
+  useEffect(() => {
+    if (!ready || isImploding) return;
+
+    setIsImploding(true);
+    setShowProgress(false); // Stop progress updates
+
+    const finishSequence = async () => {
+      // 1. STOP all infinite animations FIRST — this is the critical fix.
+      //    Without this, framer-motion tries to reconcile infinite rotateZ
+      //    with the implode scale animation, causing frame spikes.
+      await controls.start('stopSpin');
+
+      // 2. Small delay to let the animation loop settle
+      await new Promise((r) => setTimeout(r, 50));
+
+      // 3. Start the implosion
       window.dispatchEvent(new CustomEvent('implosion-start'));
-      await controls.start('implode');
-      
-      // 4. Trigger unmount
-      onComplete();
-      
-      document.body.style.overflow = '';
-      document.documentElement.style.overflow = '';
+      const implodePromise = controls.start('implode');
+
+      // 4. Fire onReveal at 80% through the implosion (not at the start)
+      //    This prevents Hero/StarMap/OrbNavbar from mounting during peak animation load
+      setTimeout(() => {
+        if (!revealFired.current) {
+          revealFired.current = true;
+          onReveal();
+        }
+      }, 640); // 80% of 800ms implosion
+
+      // 5. Wait for implosion to complete
+      await implodePromise;
+
+      // 6. Unmount
+      if (!doneFired.current) {
+        doneFired.current = true;
+        onDone();
+      }
     };
 
-    runAnimation();
+    finishSequence();
+  }, [ready, isImploding, controls, onReveal, onDone]);
 
-    return () => {
-      document.body.style.overflow = '';
-      document.documentElement.style.overflow = '';
-    };
-  }, [controls, onComplete]);
+  const displayProgress = Math.round(progressRef.current * 100);
 
   return (
-    <motion.div 
+    <motion.div
       className="loading-screen-overlay"
-      initial={{ opacity: 1 }}
-      exit={{ opacity: 0, transition: { duration: 1.2, ease: "easeInOut" } }}
+      initial={{ backgroundColor: 'rgba(0, 0, 0, 1)' }}
+      animate={{
+        backgroundColor: isImploding ? 'rgba(0, 0, 0, 0)' : 'rgba(0, 0, 0, 1)',
+      }}
+      transition={{ duration: 0.8, ease: 'easeIn' }}
     >
       <div className="black-hole-container">
-        
         {/* Outer Ring */}
-        <motion.div 
+        <motion.div
           className="accretion-disk-outer"
           initial={{ scale: 0, opacity: 0, rotateX: 70, rotateZ: 0 }}
           animate={controls}
           variants={{
-            visible: { 
-              scale: 1, opacity: 1, rotateZ: 360, 
-              transition: { 
-                scale: { duration: 1.5, ease: "easeOut" },
+            visible: {
+              scale: 1,
+              opacity: 1,
+              rotateZ: 360,
+              transition: {
+                scale: { duration: 1.5, ease: 'easeOut' },
                 opacity: { duration: 1.5 },
-                rotateZ: { duration: 10, ease: "linear", repeat: Infinity } 
-              } 
+                rotateZ: { duration: 10, ease: 'linear', repeat: Infinity },
+              },
             },
-            implode: { scale: 0, opacity: 0, transition: { duration: 0.8, ease: "backIn" } }
+            stopSpin: {
+              rotateZ: 0,
+              transition: { duration: 0.3, ease: 'easeOut' },
+            },
+            implode: {
+              scale: 0,
+              opacity: 0,
+              transition: { duration: 0.8, ease: [0.6, 0, 0.4, 1] },
+            },
           }}
         />
 
         {/* Main Disk */}
-        <motion.div 
+        <motion.div
           className="accretion-disk"
           initial={{ scale: 0.2, opacity: 0, rotateX: 65, rotateZ: 0 }}
           animate={controls}
           variants={{
-            visible: { 
-              scale: 1, opacity: 1, rotateZ: 360, 
-              transition: { 
-                scale: { duration: 1.2, ease: "easeOut", delay: 0.2 },
+            visible: {
+              scale: 1,
+              opacity: 1,
+              rotateZ: 360,
+              transition: {
+                scale: { duration: 1.2, ease: 'easeOut', delay: 0.2 },
                 opacity: { duration: 1.2, delay: 0.2 },
-                rotateZ: { duration: 3, ease: "linear", repeat: Infinity } 
-              } 
+                rotateZ: { duration: 3, ease: 'linear', repeat: Infinity },
+              },
             },
-            implode: { scale: 0, opacity: 0, rotateZ: 720, transition: { duration: 0.8, ease: "backIn" } }
+            stopSpin: {
+              rotateZ: 0,
+              transition: { duration: 0.3, ease: 'easeOut' },
+            },
+            implode: {
+              scale: 0,
+              opacity: 0,
+              rotateZ: 720,
+              transition: { duration: 0.8, ease: [0.6, 0, 0.4, 1] },
+            },
           }}
         />
 
         {/* Inner Disk */}
-        <motion.div 
+        <motion.div
           className="accretion-disk-inner"
           initial={{ scale: 0, opacity: 0, rotateX: 60, rotateZ: 0 }}
           animate={controls}
           variants={{
-            visible: { 
-              scale: 1, opacity: 1, rotateZ: -360, 
-              transition: { 
-                scale: { duration: 1, ease: "easeOut", delay: 0.4 },
+            visible: {
+              scale: 1,
+              opacity: 1,
+              rotateZ: -360,
+              transition: {
+                scale: { duration: 1, ease: 'easeOut', delay: 0.4 },
                 opacity: { duration: 1, delay: 0.4 },
-                rotateZ: { duration: 2, ease: "linear", repeat: Infinity } 
-              } 
+                rotateZ: { duration: 2, ease: 'linear', repeat: Infinity },
+              },
             },
-            implode: { scale: 0, opacity: 0, rotateZ: -720, transition: { duration: 0.6, ease: "backIn" } }
+            stopSpin: {
+              rotateZ: 0,
+              transition: { duration: 0.3, ease: 'easeOut' },
+            },
+            implode: {
+              scale: 0,
+              opacity: 0,
+              rotateZ: -720,
+              transition: { duration: 0.6, ease: [0.6, 0, 0.4, 1] },
+            },
           }}
         />
 
-        {/* Black Hole Event Horizon */}
-        <motion.div 
-          className="event-horizon"
+        {/* Event Horizon — remove box-shadow during implosion to prevent repaint storms */}
+        <motion.div
+          className={`event-horizon${isImploding ? ' imploding' : ''}`}
           initial={{ scale: 0 }}
           animate={controls}
           variants={{
-            visible: { scale: 1, transition: { duration: 1.8, ease: [0.16, 1, 0.3, 1] } },
-            implode: { scale: 0, transition: { duration: 0.6, ease: "easeIn", delay: 0.2 } }
+            visible: {
+              scale: 1,
+              transition: { duration: 1.8, ease: [0.16, 1, 0.3, 1] },
+            },
+            stopSpin: {},
+            implode: {
+              scale: 0,
+              transition: { duration: 0.6, ease: 'easeIn', delay: 0.2 },
+            },
           }}
         />
 
-        {/* Pulsing Text */}
-        <motion.div 
-          className="loading-text"
-          initial={{ opacity: 0 }}
-          animate={controls}
-          variants={{
-            visible: { 
-              opacity: [0.3, 0.8, 0.3], 
-              transition: { opacity: { duration: 2, repeat: Infinity, ease: "easeInOut" } } 
-            },
-            implode: { opacity: 0, transition: { duration: 0.3 } }
-          }}
-        >
-          establishing orbit
-        </motion.div>
+        {/* Progress Text — isolated from animation re-renders */}
+        {showProgress && (
+          <div className="loading-text">
+            {displayProgress < 100
+              ? `establishing orbit... ${displayProgress}%`
+              : 'at your service.'}
+          </div>
+        )}
       </div>
     </motion.div>
   );

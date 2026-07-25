@@ -1,5 +1,4 @@
-import { useState, useEffect, lazy, Suspense } from 'react';
-import { AnimatePresence } from 'framer-motion';
+import { useState, useEffect, lazy, Suspense, useCallback } from 'react';
 import { Canvas } from '@react-three/fiber';
 import { View } from '@react-three/drei';
 import CustomCursor from './components/CustomCursor';
@@ -8,92 +7,100 @@ import Hero from './components/sections/Hero';
 import OrbNavbar from './components/layout/OrbNavbar';
 import Footer from './components/layout/Footer';
 import LoadingScreen from './components/layout/LoadingScreen';
+import SectionLoader from './components/layout/SectionLoader';
 import ConnectModal from './components/layout/ConnectModal';
-import { useIsMobile } from './hooks/useIsMobile';
+import ErrorBoundary from './components/layout/ErrorBoundary';
+import { useMoonFavicon } from './hooks/useMoonFavicon';
 
+// Lazy imports — chunks load on demand
 const Skills = lazy(() => import('./components/sections/Skills'));
 const Experience = lazy(() => import('./components/sections/Experience'));
 const Projects = lazy(() => import('./components/sections/Projects'));
 
-// Hoisted once — never changes across the app lifetime
-const rootElement = document.getElementById('root');
-
 function App() {
-  const [isLoading, setIsLoading] = useState(true);
-  const [isFullyLoaded, setIsFullyLoaded] = useState(false);
+  useMoonFavicon();
+  
+  const [revealed, setRevealed] = useState(false);
+  const [preloaderGone, setPreloaderGone] = useState(false);
   const [isConnectModalOpen, setIsConnectModalOpen] = useState(false);
-  const isMobile = useIsMobile(1023);
+  const [rootElement, setRootElement] = useState<HTMLElement | null>(null);
 
-  // Mount the heavy WebGL components 0.5s before the 1.2s exit animation finishes (at 700ms)
-  // This hides the WebGL shader compilation freeze behind the fade-out, preventing a delay on scroll.
+  const openConnectModal = useCallback(() => setIsConnectModalOpen(true), []);
+  const closeConnectModal = useCallback(() => setIsConnectModalOpen(false), []);
+
+  // Get root element AFTER mount (not at module level)
   useEffect(() => {
-    if (!isLoading) {
-      const timer = setTimeout(() => {
-        setIsFullyLoaded(true);
-      }, 700);
-      return () => clearTimeout(timer);
-    }
-  }, [isLoading]);
+    setRootElement(document.getElementById('root'));
+  }, []);
 
-  if (isMobile) {
-    return (
-      <div style={{
-        height: '100dvh',
-        width: '100vw',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        backgroundColor: '#0F0F1A',
-        color: '#EBEBF0',
-        padding: '2rem',
-        textAlign: 'center',
-        zIndex: 9999,
-        position: 'fixed',
-        top: 0,
-        left: 0
-      }}>
-        <h1 style={{ fontFamily: 'Italiana, serif', fontSize: '2.5rem', marginBottom: '1rem' }}>Desktop Required</h1>
-        <p style={{ fontFamily: 'Jost, sans-serif', fontSize: '1.1rem', color: '#7A7A8C', maxWidth: '400px' }}>
-          This highly interactive portfolio is currently optimized exclusively for desktop and laptop displays. 
-          Please visit again from a larger screen.
-        </p>
-      </div>
-    );
-  }
+  // Scroll lock while the airlock is sealed
+  useEffect(() => {
+    document.documentElement.classList.toggle('is-locked', !revealed);
+    return () => document.documentElement.classList.remove('is-locked');
+  }, [revealed]);
+
+  // Prefetch lazy chunks AFTER the boot sequence completes
+  // This prevents chunk loading from colliding with the implosion animation
+  useEffect(() => {
+    if (!preloaderGone) return;
+    
+    // Small delay to let the site settle after reveal
+    const timer = setTimeout(() => {
+      import('./components/sections/Skills');
+      import('./components/sections/Experience');
+      import('./components/sections/Projects');
+    }, 500);
+    
+    return () => clearTimeout(timer);
+  }, [preloaderGone]);
 
   return (
     <>
-      <AnimatePresence mode="wait">
-        {isLoading && <LoadingScreen onComplete={() => setIsLoading(false)} />}
-      </AnimatePresence>
+      {!preloaderGone && (
+        <LoadingScreen
+          onReveal={() => setRevealed(true)}
+          onDone={() => setPreloaderGone(true)}
+        />
+      )}
 
       <CustomCursor />
       <StarMapBackground />
       <OrbNavbar />
-      <main className="main-content">
-        <Hero onOpenConnectModal={() => setIsConnectModalOpen(true)} />
-        {isFullyLoaded && (
-          <Suspense fallback={null}>
+
+      <main className="main-content" aria-busy={!revealed}>
+        <Hero start={revealed} onOpenConnectModal={openConnectModal} />
+        <ErrorBoundary>
+          <Suspense fallback={<SectionLoader />}>
             <Skills />
             <Experience />
             <Projects />
           </Suspense>
-        )}
+        </ErrorBoundary>
       </main>
-      <Footer onOpenConnectModal={() => setIsConnectModalOpen(true)} />
-      {rootElement && isFullyLoaded && (
+
+      <Footer onOpenConnectModal={openConnectModal} />
+
+      {rootElement && (
         <Canvas
           eventSource={rootElement}
           gl={{ antialias: false, powerPreference: 'high-performance' }}
-          dpr={[1, 1.5]}
+          dpr={[1, 2]}
           className="global-canvas"
-          style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', pointerEvents: 'none', zIndex: 5 }}
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            width: '100vw',
+            height: '100vh',
+            pointerEvents: 'none',
+            zIndex: 5,
+          }}
         >
           <View.Port />
         </Canvas>
       )}
-      <ConnectModal isOpen={isConnectModalOpen} onClose={() => setIsConnectModalOpen(false)} />
+
+      <ConnectModal isOpen={isConnectModalOpen} onClose={closeConnectModal} />
     </>
   );
 }

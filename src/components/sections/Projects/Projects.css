@@ -1,4 +1,16 @@
+/* ═══════════════════════════════════════════════════════════════════
+   PROJECTS SECTION
+   The black-hole screen anchor is written to --bh-anchor-y / --bh-glow-y
+   by JS (camera projection, once per resize). Everything else is plain
+   CSS that the compositor scrolls as one unit.
+   ═══════════════════════════════════════════════════════════════════ */
+
 .projects-section {
+  /* Fallback matches 1080p (posY=1.0) before JS hydration */
+  --bh-anchor-y: 35.66%;
+  --bh-glow-y: 36.59%;
+
+  height: 100vh;
   height: 100dvh;
   width: 100%;
   position: relative;
@@ -7,9 +19,10 @@
   overflow: hidden;
   scroll-snap-align: start;
   content-visibility: auto;
-  contain-intrinsic-size: 100vh;
+  contain-intrinsic-size: auto 100dvh;
 }
 
+/* ─── 3D canvas ─── */
 .projects-canvas-wrapper {
   width: 100%;
   height: 100%;
@@ -19,9 +32,9 @@
   z-index: 10;
 }
 
-/* On mobile Saturn has no touch interactions — pass all events through
-   so vertical scroll is never blocked by the WebGL canvas */
-@media (max-width: 767px) {
+/* On touch devices, let vertical scroll pass straight through the canvas.
+   Planets remain interactive (they set pointer-events:auto explicitly). */
+@media (max-width: 767px), (pointer: coarse) {
   .projects-canvas-wrapper {
     pointer-events: none;
     touch-action: pan-y;
@@ -34,29 +47,65 @@
   touch-action: pan-y;
 }
 
-.hanging-thread {
+/* ─── Ambient glow — behind the canvas, anchored to the black hole ─── */
+.saturn-glow {
+  position: absolute;
+  left: 50%;
+  top: var(--bh-glow-y);
+  transform: translate(-50%, -50%);
+  width: clamp(80px, 15vh, 140px);
+  height: clamp(80px, 15vh, 140px);
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.2) 0%, rgba(255, 255, 255, 0) 70%);
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 5; /* below canvas (10) — shows through the transparent clearcoat */
+  animation: saturn-pulse 4s ease-in-out infinite;
+}
+
+@keyframes saturn-pulse {
+  0%   { transform: translate(-50%, -50%) scale(1);    opacity: 0.6; }
+  50%  { transform: translate(-50%, -50%) scale(1.15); opacity: 1;   }
+  100% { transform: translate(-50%, -50%) scale(1);    opacity: 0.6; }
+}
+
+/* ─── Overlay anchor — zero-size point at the projected black-hole center ─── */
+.projects-overlay-anchor {
+  position: absolute;
+  left: 50%;
+  top: var(--bh-anchor-y);
+  width: 0;
+  height: 0;
+  z-index: 15;
+  pointer-events: none;
+}
+
+/* Overlay containers hang down from the anchor point */
+.projects-overlay-container {
   position: absolute;
   top: 0;
-  width: 1px;
-  background: linear-gradient(to bottom, var(--line-visible), transparent);
-  transform: translateX(-50%); /* Perfect center alignment */
+  left: 0;
+  transform: translateX(-50%);
+  width: clamp(24px, 5.2vh, 48px);
+  height: 75dvh;
+  pointer-events: none;
 }
 
+.projects-threads-overlay { z-index: 5; }
+.projects-nodes-overlay   { z-index: 15; }
+
+/* ─── Swarm particles (compositor-driven: transform + opacity only) ─── */
 @keyframes swarmUp {
-  0% { transform: translateY(0px); opacity: 0; }
-  20% { opacity: 0.8; }
-  80% { opacity: 0.8; }
-  100% { transform: translateY(-150px); opacity: 0; }
+  0%   { transform: translateY(0);      opacity: 0;   }
+  20%  { opacity: 0.8; }
+  80%  { opacity: 0.8; }
+  100% { transform: translateY(-20vh);  opacity: 0;   }
 }
-
 @keyframes swarmDown {
-  0% { transform: translateY(0px); opacity: 0; }
-  20% { opacity: 0.8; }
-  80% { opacity: 0.8; }
-  100% { transform: translateY(150px); opacity: 0; }
+  0%   { transform: translateY(0);      opacity: 0;   }
+  20%  { opacity: 0.8; }
+  80%  { opacity: 0.8; }
+  100% { transform: translateY(20vh);   opacity: 0;   }
 }
-
-
 
 .thread-particle {
   position: absolute;
@@ -67,68 +116,31 @@
   box-shadow: 0 0 6px 1px rgba(255, 255, 255, 0.6);
   pointer-events: none;
   opacity: 0;
-  transition: width 0.3s ease, opacity 0.3s ease;
-}
-
-.saturn-glow {
-  width: 280px;
-  height: 280px;
-  background: radial-gradient(circle, rgba(255, 255, 255, 0.2) 0%, rgba(255, 255, 255, 0) 70%);
-  border-radius: 50%;
-  pointer-events: none;
-  animation: saturn-pulse 4s ease-in-out infinite;
-}
-
-@keyframes saturn-pulse {
-  0% { transform: scale(1); opacity: 0.6; }
-  50% { transform: scale(1.15); opacity: 1; }
-  100% { transform: scale(1); opacity: 0.6; }
-}
-
-.projects-overlay-container {
-  position: absolute;
-  top: 0; /* Positioned relative to the 0x0 Html wrapper centered at Saturn */
-  left: 0;
-  transform: translateX(-50%);
-  width: clamp(30px, 6.5vh, 60px);
-  height: 75dvh;
-  pointer-events: none;
-}
-
-@media (min-aspect-ratio: 2/1) {
-  .projects-overlay-container {
-    top: 0;
-  }
-}
-
-@media (max-aspect-ratio: 3/4) {
-  .projects-overlay-container {
-    top: 0;
-  }
-}
-
-.projects-threads-overlay {
-  z-index: 5;
-}
-
-.projects-nodes-overlay {
-  z-index: 15;
 }
 
 .projects-swarm-mask {
   position: absolute;
-  top: 0;
+  top: 12%;
   left: 0;
   width: 100%;
-  height: 100%;
-  -webkit-mask-image: linear-gradient(to bottom, transparent 5%, black 20%, black 70%, transparent 90%);
-  mask-image: linear-gradient(to bottom, transparent 5%, black 20%, black 70%, transparent 90%);
+  height: 88%;
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 15%, black 75%, transparent 100%);
+  mask-image: linear-gradient(to bottom, transparent 0%, black 15%, black 75%, transparent 100%);
 }
 
+/* ─── Planet keyboard focus (WCAG 2.4.7) ─── */
+.planet-hit-area:focus { outline: none; }
+.planet-hit-area:focus-visible {
+  outline: 2px solid rgba(255, 255, 255, 0.6);
+  outline-offset: 4px;
+  border-radius: 50%;
+}
+
+/* ─── Planet label HUD ─── */
 .projects-hover-label {
   position: absolute;
   top: 50%;
-  left: 15%;
+  left: clamp(2rem, 10vw, 18rem);
   z-index: 20;
   pointer-events: none;
   display: flex;
@@ -156,7 +168,9 @@
   line-height: 1.4;
 }
 
-@media (max-width: 767px) {
+/* Dock HUD to bottom-center on tablets / touch — mirrored exactly by the
+   JS `isHudDocked` media query so animation and position always agree. */
+@media (max-width: 1100px), (pointer: coarse) {
   .projects-hover-label {
     top: auto;
     bottom: 7%;
@@ -174,3 +188,6 @@
     max-width: 280px;
   }
 }
+
+/* ─── Reduced motion ─── */
+

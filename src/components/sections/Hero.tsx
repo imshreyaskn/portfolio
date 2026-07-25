@@ -1,88 +1,131 @@
-import { motion } from 'framer-motion';
+import { motion, type Variants, type Easing } from 'framer-motion';
+import { useCallback, useState } from 'react';
+import MagneticButton from '../MagneticButton';
 import './Hero.css';
 
-const Hero = ({ onOpenConnectModal }: { onOpenConnectModal: () => void }) => {
-  // Staggered animation variants for premium reveal
-  const container = {
-    hidden: { opacity: 0 },
-    show: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.15,
-        delayChildren: 0.3,
-      }
-    }
-  };
+/* ─── Animation Constants (module-level: no re-creation per render) ─── */
 
-  const item = {
-    hidden: { opacity: 0, y: 30, filter: 'blur(8px)' },
-    show: { opacity: 1, y: 0, filter: 'blur(0px)', transition: { duration: 1.2, ease: [0.16, 1, 0.3, 1] as [number, number, number, number] } }
-  };
+const EASE_PREMIUM: Easing = [0.16, 1, 0.3, 1];
+
+const containerVariants: Variants = {
+  hidden: { opacity: 0 },
+  show: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.15,
+      delayChildren: 0.3,
+    },
+  },
+};
+
+const itemVariants: Variants = {
+  hidden: { opacity: 0, y: 30, filter: 'blur(8px)' },
+  show: {
+    opacity: 1,
+    y: 0,
+    filter: 'blur(0px)',
+    transition: { duration: 1.2, ease: EASE_PREMIUM },
+  },
+};
+
+const sectionInitial = { scale: 0.95, opacity: 0, filter: 'blur(10px)' };
+const sectionAnimate = { scale: 1, opacity: 1, filter: 'blur(0px)' };
+const sectionTransition = { duration: 1.5, ease: EASE_PREMIUM };
+
+/* ─── Component ─── */
+
+interface HeroProps {
+  onOpenConnectModal: () => void;
+  /** Held false by the Arrival until the readiness gate passes. */
+  start: boolean;
+}
+
+const Hero = ({ onOpenConnectModal, start }: HeroProps) => {
+  const [sheenDone, setSheenDone] = useState(false);
+  const reducedMotion = false; // Forced false to ensure animation plays
+
+  const handleConnectClick = useCallback(() => {
+    onOpenConnectModal();
+  }, [onOpenConnectModal]);
 
   return (
-    <motion.section 
-      id="home" 
+    <motion.section
+      id="home"
       className="hero-section"
-      initial={{ scale: 0.95, opacity: 0, filter: 'blur(10px)' }}
-      animate={{ scale: 1, opacity: 1, filter: 'blur(0px)' }}
-      transition={{ duration: 1.5, ease: [0.16, 1, 0.3, 1] }}
+      aria-label="Introduction"
+      initial={false}
+      animate={
+        start
+          ? { scale: 1, opacity: 1, filter: 'blur(0px)' }
+          : { scale: 0.95, opacity: 0, filter: 'blur(10px)' }
+      }
+      transition={{ duration: 1.5, ease: EASE_PREMIUM }}
     >
-      
-      {/* Right Image (Absolute to touch the right screen edge) */}
-      <div className="hero-image-wrapper">
+      {/* Decorative hero figure — anchored to right edge */}
+      <div
+        className={`hero-image-wrapper${start && !sheenDone && !reducedMotion ? ' hero-image-wrapper--sheen' : ''}`}
+        aria-hidden="true"
+      >
         <img
           src="/hero-figure.webp"
-          alt="Artistic 3D rendering of Shreyas"
-          aria-hidden="true"
+          alt=""
           className="hero-image"
           width={810}
           height={1080}
           fetchPriority="high"
           decoding="async"
+          draggable={false}
         />
       </div>
 
-      <div className="container hero-content-wrapper">
-        
-        {/* Left Content */}
-        <motion.div 
-          variants={container}
+      {/* Primary content column */}
+      <div className="hero-content-wrapper">
+        <motion.div
+          variants={containerVariants}
           initial="hidden"
-          animate="show"
+          animate={start ? 'show' : 'hidden'}
           className="hero-content"
         >
-          
-          <motion.div variants={item} style={{ marginBottom: '4px' }}>
-            <span className="hero-pretitle silver-glow-text">
-              私は
-            </span>
-          </motion.div>
-          
-          <motion.div variants={item} className="hero-title-wrapper">
-            <h1 className="hero-title">
+          {/* Pretitle — Japanese particle */}
+          <motion.p variants={itemVariants} className="hero-pretitle silver-glow-text">
+            私は
+          </motion.p>
+
+          {/* Name */}
+          <motion.div variants={itemVariants} className="hero-title-wrapper">
+            <h1
+              className={`hero-title${
+                start && !sheenDone && !reducedMotion ? ' hero-title--sheen' : ''
+              }`}
+              onAnimationEnd={(e) => {
+                // Self-clean: once the sweep lands, restore the pristine title
+                if (e.animationName === 'image-sheen') setSheenDone(true);
+              }}
+            >
               shreyas
             </h1>
           </motion.div>
 
-          <motion.div variants={item} className="hero-desc-wrapper">
+          {/* Description */}
+          <motion.div variants={itemVariants} className="hero-desc-wrapper">
             <p className="hero-desc">
-              a computer science student building ai agents, llm security tools, and automation systems.<br/>
+              a computer science student building ai agents, llm security tools,
+              and automation systems.
+              <br />
               <span className="silver-glow-text">at your service.</span>
             </p>
           </motion.div>
 
-          {/* Detached CTA Component */}
-          <motion.div variants={item} className="hero-cta-wrapper">
-            <motion.button 
-              onClick={onOpenConnectModal}
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
+          {/* CTA */}
+          <motion.div variants={itemVariants} className="hero-cta-wrapper">
+            <MagneticButton
+              onClick={handleConnectClick}
               className="framer-button hero-cta"
+              aria-label="Open contact form to connect"
             >
               let's connect
-            </motion.button>
+            </MagneticButton>
           </motion.div>
-
         </motion.div>
       </div>
     </motion.section>
