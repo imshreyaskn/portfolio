@@ -17,7 +17,7 @@ import './Projects.css';
 /* ─── Hanging threads SVG (static geometry, shared gradient) ─── */
 const ThreadsSVG = () => (
   <svg
-    viewBox="-60 0 220 100"
+    viewBox="0 0 100 100"
     preserveAspectRatio="none"
     style={{
       position: 'absolute',
