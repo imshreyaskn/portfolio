@@ -118,6 +118,8 @@ const ParticleSphere = memo(function ParticleSphere({
   const isHolding = useRef(false);
   const isSettled = useRef(false);
   const onSelectRef = useRef(onSelect);
+  const isMobileRef = useRef(isMobile);
+  useEffect(() => { isMobileRef.current = isMobile; }, [isMobile]);
 
   useEffect(() => { onSelectRef.current = onSelect; }, [onSelect]);
 
@@ -222,7 +224,8 @@ const ParticleSphere = memo(function ParticleSphere({
 
       const { x: px, y: py } = pointerRef.current;
       const dist = Math.sqrt(px * px + py * py);
-      if (dist <= 0.3) return; // Too close to center — no selection
+      const threshold = isMobileRef.current ? 0.05 : 0.3;
+      if (dist <= threshold) return; // Too close to center — no selection
 
       let angle = Math.atan2(py, px) - GLOBAL_OFFSET;
       if (angle < 0) angle += Math.PI * 2;
@@ -362,11 +365,13 @@ const ParticleSphere = memo(function ParticleSphere({
     if (morph !== prevMorph || morph > 0) {
       ringMaterial.uniforms.uMorph.value = morph;
 
-      for (let i = 0; i < textRefs.current.length; i++) {
-        const txt = textRefs.current[i];
-        if (!txt) continue;
-        txt.style.opacity = String(morph);
-        txt.style.display = morph > 0.01 ? 'block' : 'none';
+      if (!isMobileRef.current) {
+        for (let i = 0; i < textRefs.current.length; i++) {
+          const txt = textRefs.current[i];
+          if (!txt) continue;
+          txt.style.opacity = String(morph);
+          txt.style.display = morph > 0.01 ? 'block' : 'none';
+        }
       }
     }
 
@@ -443,10 +448,10 @@ const ParticleSphere = memo(function ParticleSphere({
     <group>
       {/* Invisible hit sphere for raycasting */}
       <mesh
-        onPointerMove={isTouchPrimary ? undefined : handlePointerMove}
-        onPointerOut={isTouchPrimary ? undefined : handlePointerOut}
-        onPointerDown={isTouchPrimary ? undefined : handlePointerDown}
-        onPointerUp={isTouchPrimary ? undefined : handlePointerUp}
+        onPointerMove={handlePointerMove}
+        onPointerOut={handlePointerOut}
+        onPointerDown={handlePointerDown}
+        onPointerUp={handlePointerUp}
       >
         <sphereGeometry args={[radius, 16, 16]} />
         <meshBasicMaterial visible={false} />
@@ -478,12 +483,14 @@ const ParticleSphere = memo(function ParticleSphere({
                   ref={(el) => { textRefs.current[i] = el; }}
                   className={isMobile ? 'skills-3d-label-mobile' : 'silver-glow-text label'}
                   style={{
-                    opacity: 0,
-                    display: 'none',
-                    pointerEvents: 'none',
+                    opacity: isMobile ? 1 : 0,
+                    display: isMobile ? 'block' : 'none',
+                    pointerEvents: isMobile ? 'auto' : 'none',
                     whiteSpace: 'nowrap',
+                    cursor: isMobile ? 'pointer' : 'default',
                     ...(isMobile ? {} : { fontSize: '14px', letterSpacing: '0.15em' }),
                   }}
+                  onClick={isMobile ? () => onSelectRef.current?.(i) : undefined}
                 >
                   {isMobile ? (
                     <skill.icon
