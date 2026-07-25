@@ -145,9 +145,10 @@ const PlanetHitArea = ({
           handleClick();
         }
       }}
-      x="-50%"
-      y="-50%"
+      initial={{ x: "-50%", y: "-50%" }}
       style={{
+        x: "-50%",
+        y: "-50%",
         pointerEvents: 'auto',
         position: 'absolute',
         top,
