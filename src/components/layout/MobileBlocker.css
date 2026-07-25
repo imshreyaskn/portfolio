@@ -1,0 +1,46 @@
+.mobile-blocker {
+  position: fixed;
+  inset: 0;
+  background-color: var(--bg-void, #000000);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  text-align: center;
+  font-family: 'Inter', sans-serif;
+}
+
+.mobile-blocker-content {
+  max-width: 400px;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  padding: 2.5rem;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.mobile-blocker-title {
+  font-family: 'Italiana', serif;
+  font-size: 1.8rem;
+  letter-spacing: 0.1em;
+  margin: 0;
+}
+
+.mobile-blocker-desc {
+  font-size: 1.05rem;
+  line-height: 1.6;
+  color: rgba(255, 255, 255, 0.85);
+  margin: 0;
+}
+
+.mobile-blocker-sub {
+  font-size: 0.9rem;
+  color: var(--text-secondary, #7A7A8C);
+  margin: 0;
+}

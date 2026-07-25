@@ -11,6 +11,8 @@ import SectionLoader from './components/layout/SectionLoader';
 import ConnectModal from './components/layout/ConnectModal';
 import ErrorBoundary from './components/layout/ErrorBoundary';
 import { useMoonFavicon } from './hooks/useMoonFavicon';
+import MobileBlocker from './components/layout/MobileBlocker';
+import { useIsMobile } from './hooks/useIsMobile';
 
 // Lazy imports — chunks load on demand
 const Skills = lazy(() => import('./components/sections/Skills'));
@@ -75,6 +77,12 @@ function App() {
     
     return () => clearTimeout(timer);
   }, [preloaderGone]);
+
+  const isMobile = useIsMobile();
+
+  if (isMobile) {
+    return <MobileBlocker />;
+  }
 
   return (
     <>
