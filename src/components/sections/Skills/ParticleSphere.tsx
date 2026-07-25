@@ -1,4 +1,7 @@
-// ParticleSphere.tsx — R3F interactive particle sphere with ring selector
+// ParticleSphere.tsx — R3F interactive particle sphere with ring select
+// 1:1 desktop/mobile: rest = bare sphere, hold = repel +
+// icons fade in, drag-release = select. Desktop path unchanged except the
+// morph-guard perf fix; mobile skips all per-frame label DOM writes.
 import { useMemo, useRef, useEffect, memo, useCallback } from 'react';
 import {
   Vector3, Matrix4, Ray, Color,
@@ -8,54 +11,38 @@ import {
 import { useFrame } from '@react-three/fiber';
 import { Html } from '@react-three/drei';
 import { SKILLS_DATA, CATEGORY_COUNT } from './data';
-import type { ViewportContext } from '../../../hooks/useViewport';
-
-/* ─── Constants ─── */
 
 const GLOBAL_OFFSET = -Math.PI / 10;
 const SLICE_ANGLE = (Math.PI * 2) / CATEGORY_COUNT;
-const IDLE_ROTATION_SPEED_Y = 0.15;
-const IDLE_ROTATION_SPEED_X = 0.05;
-const PARTICLE_LERP_FACTOR = 10;
-const MORPH_LERP_FACTOR = 12;
-const SETTLE_THRESHOLD_SQ = 1e-6;
-
-/* ─── Shader Source ─── */
+const IDLE_ROT_Y = 0.15;
+const IDLE_ROT_X = 0.05;
+const PARTICLE_LERP = 10;
+const MORPH_LERP = 12;
+const SETTLE_SQ = 1e-6;
+// Local radius of the chevron (ring-arc) tip; mobile labels hug just outside it.
+const RING_TIP = 0.774;
 
 export const RING_VERTEX_SHADER = /* glsl */ `
   uniform float uMorph;
   uniform float uRadius;
   varying vec3 vWorldPos;
-
   void main() {
     float PI = 3.141592653589793;
     float sliceAngle = (PI * 2.0) / ${CATEGORY_COUNT}.0;
     float midAngle = sliceAngle / 2.0;
     float maxDist = sliceAngle / 2.0;
-
-    float bx = position.x;
-    float by = position.y;
+    float bx = position.x, by = position.y;
     float angleBase = atan(by, bx);
     float rBase = length(vec2(bx, by));
-
     float angleDist = angleBase - midAngle;
     float targetAngle = midAngle + (angleDist * 0.15);
     float currentAngle = mix(angleBase, targetAngle, uMorph);
-
     float distNorm = abs(angleBase - midAngle) / maxDist;
-    float pushOut = 0.02;
-    float pullIn = 0.08;
+    float pushOut = 0.02, pullIn = 0.08;
     float thicknessBoost = rBase > (uRadius + 0.252) ? 0.006 : 0.0;
-
     float arrowR = rBase + thicknessBoost + pushOut - ((pushOut + pullIn) * distNorm);
     float currentR = mix(rBase, arrowR, uMorph);
-
-    vec3 deformed = vec3(
-      cos(currentAngle) * currentR,
-      sin(currentAngle) * currentR,
-      position.z
-    );
-
+    vec3 deformed = vec3(cos(currentAngle) * currentR, sin(currentAngle) * currentR, position.z);
     vec4 worldPosition = modelMatrix * vec4(deformed, 1.0);
     vWorldPos = worldPosition.xyz;
     gl_Position = projectionMatrix * viewMatrix * worldPosition;
@@ -68,22 +55,15 @@ export const RING_FRAGMENT_SHADER = /* glsl */ `
   uniform vec3 uColor;
   uniform vec3 uHighlightColor;
   varying vec3 vWorldPos;
-
   void main() {
     float sweep = fract((uTime * 0.2) - (vWorldPos.x * 0.3));
     float shine = smoothstep(0.3, 0.5, sweep) * smoothstep(0.7, 0.5, sweep);
-
     vec3 finalColor = mix(uColor, uHighlightColor, shine);
     finalColor = mix(finalColor, uHighlightColor, uMorph);
-
     float idleOpacity = 0.5 + (shine * 0.5);
-    float finalOpacity = mix(idleOpacity, 1.0, uMorph);
-
-    gl_FragColor = vec4(finalColor, finalOpacity);
+    gl_FragColor = vec4(finalColor, mix(idleOpacity, 1.0, uMorph));
   }
 `;
-
-/* ─── Types ─── */
 
 interface ParticleSphereProps {
   count?: number;
@@ -91,10 +71,8 @@ interface ParticleSphereProps {
   onSelect?: (index: number) => void;
   portalRef?: React.RefObject<HTMLDivElement | null>;
   isPaused?: boolean;
-  viewport: ViewportContext;
+  isMobile?: boolean;
 }
-
-/* ─── Component ─── */
 
 const ParticleSphere = memo(function ParticleSphere({
   count = 300,
@@ -102,12 +80,8 @@ const ParticleSphere = memo(function ParticleSphere({
   onSelect,
   portalRef,
   isPaused = false,
-  viewport,
+  isMobile = false,
 }: ParticleSphereProps) {
-  const { isMobile, interactionMode } = viewport;
-  const isTouchPrimary = interactionMode !== 'pointer';
-
-  /* ── Refs ── */
   const pointsRef = useRef<Points>(null);
   const materialRef = useRef<PointsMaterial>(null);
   const ringGroupRef = useRef<Group>(null);
@@ -119,55 +93,34 @@ const ParticleSphere = memo(function ParticleSphere({
   const isSettled = useRef(false);
   const onSelectRef = useRef(onSelect);
   const isMobileRef = useRef(isMobile);
-  useEffect(() => { isMobileRef.current = isMobile; }, [isMobile]);
+  const aimedRef = useRef(-1);
+  const labelsShownRef = useRef(false);
 
   useEffect(() => { onSelectRef.current = onSelect; }, [onSelect]);
+  useEffect(() => { isMobileRef.current = isMobile; }, [isMobile]);
 
-  /* ── Shader material & geometry via useMemo (not render-body side effect) ── */
-  const ringMaterial = useMemo(() => {
-    return new ShaderMaterial({
-      transparent: true,
-      depthWrite: false,
-      side: DoubleSide,
-      uniforms: {
-        uTime: { value: 0 },
-        uMorph: { value: 0 },
-        uRadius: { value: radius },
-        uColor: { value: new Color(0x7a7a8c) },
-        uHighlightColor: { value: new Color(0xffffff) },
-      },
-      vertexShader: RING_VERTEX_SHADER,
-      fragmentShader: RING_FRAGMENT_SHADER,
-    });
-  }, [radius]);
+  const ringMaterial = useMemo(() => new ShaderMaterial({
+    transparent: true, depthWrite: false, side: DoubleSide,
+    uniforms: {
+      uTime: { value: 0 }, uMorph: { value: 0 }, uRadius: { value: radius },
+      uColor: { value: new Color(0x7a7a8c) }, uHighlightColor: { value: new Color(0xffffff) },
+    },
+    vertexShader: RING_VERTEX_SHADER, fragmentShader: RING_FRAGMENT_SHADER,
+  }), [radius]);
 
-  const ringGeometry = useMemo(() => {
-    return new RingGeometry(
-      radius + 0.25,
-      radius + 0.254,
-      32,
-      1,
-      0,
-      SLICE_ANGLE,
-    );
-  }, [radius]);
+  const ringGeometry = useMemo(
+    () => new RingGeometry(radius + 0.25, radius + 0.254, 32, 1, 0, SLICE_ANGLE),
+    [radius],
+  );
 
-  // Dispose on unmount
-  useEffect(() => {
-    return () => {
-      ringMaterial.dispose();
-      ringGeometry.dispose();
-    };
-  }, [ringMaterial, ringGeometry]);
+  useEffect(() => () => { ringMaterial.dispose(); ringGeometry.dispose(); }, [ringMaterial, ringGeometry]);
 
-  /* ── Pre-allocated math objects (zero GC in the frame loop) ── */
   const tempVec = useMemo(() => new Vector3(), []);
   const particleBase = useMemo(() => new Vector3(), []);
   const closestPoint = useMemo(() => new Vector3(), []);
   const localRay = useMemo(() => new Ray(), []);
   const invMatrix = useMemo(() => new Matrix4(), []);
 
-  /* ── Fibonacci sphere base positions ── */
   const basePositions = useMemo(() => {
     const positions = new Float32Array(count * 3);
     const phi = Math.PI * (3 - Math.sqrt(5));
@@ -182,97 +135,59 @@ const ParticleSphere = memo(function ParticleSphere({
     return positions;
   }, [count, radius]);
 
-  const dynamicPositions = useMemo(
-    () => new Float32Array(basePositions),
-    [basePositions],
-  );
+  const dynamicPositions = useMemo(() => new Float32Array(basePositions), [basePositions]);
 
-  /* ── Pre-computed arc trig (stable across renders) ── */
-  const arcAngleData = useMemo(() => {
-    return SKILLS_DATA.map((_, i) => {
-      const centerAngle = i * SLICE_ANGLE + SLICE_ANGLE / 2;
-      const worldAngle = centerAngle + GLOBAL_OFFSET;
-      return { centerAngle, cos: Math.cos(worldAngle), sin: Math.sin(worldAngle) };
-    });
-  }, []);
+  const arcAngleData = useMemo(() => SKILLS_DATA.map((_, i) => {
+    const worldAngle = i * SLICE_ANGLE + SLICE_ANGLE / 2 + GLOBAL_OFFSET;
+    return { cos: Math.cos(worldAngle), sin: Math.sin(worldAngle) };
+  }), []);
 
-  /* ── Pointer handlers ── */
-  const handlePointerMove = useCallback(() => {
-    isInteracting.current = true;
-    isSettled.current = false;
-  }, []);
+  const handlePointerMove = useCallback(() => { isInteracting.current = true; isSettled.current = false; }, []);
+  const handlePointerDown = useCallback(() => { isInteracting.current = true; isHolding.current = true; isSettled.current = false; }, []);
+  const handlePointerUp = useCallback(() => { isHolding.current = false; }, []);
+  const handlePointerOut = useCallback(() => { isInteracting.current = false; }, []);
 
-  const handlePointerDown = useCallback(() => {
-    isInteracting.current = true;
-    isHolding.current = true;
-    isSettled.current = false;
-  }, []);
-
-  const handlePointerUp = useCallback(() => {
-    isHolding.current = false;
-  }, []);
-
-  const handlePointerOut = useCallback(() => {
-    isInteracting.current = false;
-  }, []);
-
-  /* ── Global pointerup for selection (fires even if released outside canvas) ── */
   useEffect(() => {
     const handleGlobalUp = () => {
-      if (!isHolding.current) return;
+      if (isHolding.current) {
+        const { x: px, y: py } = pointerRef.current;
+        const dist = Math.hypot(px, py);
+        const threshold = isMobileRef.current ? 0.15 : 0.3;
+        if (dist > threshold) {
+          let angle = Math.atan2(py, px) - GLOBAL_OFFSET;
+          if (angle < 0) angle += Math.PI * 2;
+          if (angle >= Math.PI * 2) angle -= Math.PI * 2;
+          onSelectRef.current?.(Math.floor(angle / SLICE_ANGLE));
+        }
+      }
       isHolding.current = false;
-
-      const { x: px, y: py } = pointerRef.current;
-      const dist = Math.sqrt(px * px + py * py);
-      const threshold = isMobileRef.current ? 0.05 : 0.3;
-      if (dist <= threshold) return; // Too close to center — no selection
-
-      let angle = Math.atan2(py, px) - GLOBAL_OFFSET;
-      if (angle < 0) angle += Math.PI * 2;
-      if (angle >= Math.PI * 2) angle -= Math.PI * 2;
-
-      const index = Math.floor(angle / SLICE_ANGLE);
-      onSelectRef.current?.(index);
     };
-
     window.addEventListener('pointerup', handleGlobalUp);
     return () => window.removeEventListener('pointerup', handleGlobalUp);
   }, []);
 
-  /* ── Frame loop (split into logical phases with early exits) ── */
   useFrame((state, delta) => {
     if (isPaused) return;
 
-    // Capture pointer position when active
     if (isInteracting.current || isHolding.current) {
       pointerRef.current.x = state.pointer.x;
       pointerRef.current.y = state.pointer.y;
     }
-
-    // Break hold if pointer drifts too far from center
-    if (isHolding.current) {
-      const dist = Math.hypot(state.pointer.x, state.pointer.y);
-      if (dist > 0.75) isHolding.current = false;
+    if (isHolding.current && Math.hypot(state.pointer.x, state.pointer.y) > 0.75) {
+      isHolding.current = false;
     }
-
     if (!pointsRef.current) return;
 
-    /* Phase 1: Idle rotation (skipped if reduced motion) */
-    pointsRef.current.rotation.y += delta * IDLE_ROTATION_SPEED_Y;
-    pointsRef.current.rotation.x += delta * IDLE_ROTATION_SPEED_X;
+    pointsRef.current.rotation.y += delta * IDLE_ROT_Y;
+    pointsRef.current.rotation.x += delta * IDLE_ROT_X;
 
-    /* Phase 2: Particle physics */
     if (isInteracting.current) isSettled.current = false;
-
     if (!isSettled.current) {
-      const positions = pointsRef.current.geometry.attributes.position
-        .array as Float32Array;
-
+      const positions = pointsRef.current.geometry.attributes.position.array as Float32Array;
       if (isInteracting.current) {
         invMatrix.copy(pointsRef.current.matrixWorld).invert();
         localRay.copy(state.raycaster.ray).applyMatrix4(invMatrix);
       }
-
       const morph = ringGroupRef.current?.userData.morphFactor ?? 0;
       const blastRadius = 0.3 + 0.5 * morph;
       const blastRadiusSq = blastRadius * blastRadius;
@@ -280,106 +195,79 @@ const ParticleSphere = memo(function ParticleSphere({
       let maxDiffSq = 0;
 
       for (let i = 0; i < count; i++) {
-        const ix = i * 3;
-        const iy = ix + 1;
-        const iz = ix + 2;
-
-        let targetX = basePositions[ix];
-        let targetY = basePositions[iy];
-        let targetZ = basePositions[iz];
+        const ix = i * 3, iy = ix + 1, iz = ix + 2;
+        let tx = basePositions[ix], ty = basePositions[iy], tz = basePositions[iz];
 
         if (isInteracting.current) {
-          particleBase.set(targetX, targetY, targetZ);
+          particleBase.set(tx, ty, tz);
           localRay.closestPointToPoint(particleBase, closestPoint);
-          const distSq = particleBase.distanceToSquared(closestPoint);
-
-          if (distSq < blastRadiusSq && distSq > 1e-4) {
-            const dist = Math.sqrt(distSq);
-            const force = (blastRadius - dist) / blastRadius;
-            const scalar = (force * maxRepulsion) / dist;
-            tempVec.subVectors(particleBase, closestPoint).multiplyScalar(scalar);
-            targetX += tempVec.x;
-            targetY += tempVec.y;
-            targetZ += tempVec.z;
+          const dSq = particleBase.distanceToSquared(closestPoint);
+          if (dSq < blastRadiusSq && dSq > 1e-4) {
+            const d = Math.sqrt(dSq);
+            const s = ((blastRadius - d) / blastRadius * maxRepulsion) / d;
+            tempVec.subVectors(particleBase, closestPoint).multiplyScalar(s);
+            tx += tempVec.x; ty += tempVec.y; tz += tempVec.z;
           }
         }
 
-        const diffX = targetX - positions[ix];
-        const diffY = targetY - positions[iy];
-        const diffZ = targetZ - positions[iz];
-
-        positions[ix] += diffX * PARTICLE_LERP_FACTOR * delta;
-        positions[iy] += diffY * PARTICLE_LERP_FACTOR * delta;
-        positions[iz] += diffZ * PARTICLE_LERP_FACTOR * delta;
+        const dx = tx - positions[ix], dy = ty - positions[iy], dz = tz - positions[iz];
+        positions[ix] += dx * PARTICLE_LERP * delta;
+        positions[iy] += dy * PARTICLE_LERP * delta;
+        positions[iz] += dz * PARTICLE_LERP * delta;
 
         if (!isInteracting.current) {
-          const dSq = diffX * diffX + diffY * diffY + diffZ * diffZ;
-          if (dSq > maxDiffSq) maxDiffSq = dSq;
+          const m = dx * dx + dy * dy + dz * dz;
+          if (m > maxDiffSq) maxDiffSq = m;
         }
       }
 
-      // Snap to base and stop updating when settled
-      if (!isInteracting.current && maxDiffSq < SETTLE_THRESHOLD_SQ) {
-        positions.set(basePositions); // single typed-array copy
+      if (!isInteracting.current && maxDiffSq < SETTLE_SQ) {
+        positions.set(basePositions);
         isSettled.current = true;
       }
-
       pointsRef.current.geometry.attributes.position.needsUpdate = true;
     }
 
-    /* Phase 3: Point glow (size + opacity lerp) */
     if (materialRef.current) {
       const mat = materialRef.current;
-      const targetSize = isHolding.current ? 0.024 : 0.012;
-      const targetOpacity = isHolding.current ? 1.0 : 0.8;
-
-      const sizeDiff = targetSize - mat.size;
-      const opacityDiff = targetOpacity - mat.opacity;
-
-      mat.size = Math.abs(sizeDiff) > 1e-4
-        ? mat.size + sizeDiff * MORPH_LERP_FACTOR * delta
-        : targetSize;
-      mat.opacity = Math.abs(opacityDiff) > 1e-4
-        ? mat.opacity + opacityDiff * MORPH_LERP_FACTOR * delta
-        : targetOpacity;
+      const tSize = isHolding.current ? 0.024 : 0.012;
+      const tOpac = isHolding.current ? 1.0 : 0.8;
+      const ds = tSize - mat.size, dop = tOpac - mat.opacity;
+      mat.size = Math.abs(ds) > 1e-4 ? mat.size + ds * MORPH_LERP * delta : tSize;
+      mat.opacity = Math.abs(dop) > 1e-4 ? mat.opacity + dop * MORPH_LERP * delta : tOpac;
     }
 
-    /* Phase 4: Ring billboard + morph + label animation */
     if (!ringGroupRef.current) return;
     const ringGroup = ringGroupRef.current;
-
-    // Billboard: always face camera
     ringGroup.quaternion.copy(state.camera.quaternion);
 
-    // Morph interpolation
     const targetMorph = isHolding.current ? 1.0 : 0.0;
     const prevMorph: number = ringGroup.userData.morphFactor ?? 0;
-    let morph = prevMorph + (targetMorph - prevMorph) * MORPH_LERP_FACTOR * delta;
+    let morph = prevMorph + (targetMorph - prevMorph) * MORPH_LERP * delta;
     if (Math.abs(morph - targetMorph) < 1e-4) morph = targetMorph;
     ringGroup.userData.morphFactor = morph;
 
-    // Shader time (always advances for idle sweep)
     ringMaterial.uniforms.uTime.value = state.clock.elapsedTime;
 
-    // Only update morph uniform + DOM when morph is active or changing
-    if (morph !== prevMorph || morph > 0) {
+    if (morph !== prevMorph) {
       ringMaterial.uniforms.uMorph.value = morph;
-
-      for (let i = 0; i < textRefs.current.length; i++) {
-        const txt = textRefs.current[i];
-        if (!txt) continue;
-        txt.style.opacity = String(morph);
-        if (isMobileRef.current) {
-          txt.style.visibility = morph > 0.01 ? 'visible' : 'hidden';
-        } else {
-          txt.style.display = morph > 0.01 ? 'block' : 'none';
+      const shown = morph > 0.01;
+      if (shown !== labelsShownRef.current) {
+        labelsShownRef.current = shown;
+        if (!isMobile) {
+          for (let i = 0; i < textRefs.current.length; i++) {
+            const t = textRefs.current[i];
+            if (t) t.style.display = shown ? 'block' : 'none';
+          }
         }
+      }
+      for (let i = 0; i < textRefs.current.length; i++) {
+        const t = textRefs.current[i];
+        if (t) t.style.opacity = String(morph);
       }
     }
 
-    // Arc positions + label effects
-    let pointerAngle = 0;
-    let pointerDist = 0;
+    let pointerAngle = 0, pointerDist = 0;
     if (isHolding.current) {
       const { x: px, y: py } = pointerRef.current;
       pointerAngle = Math.atan2(py, px) - GLOBAL_OFFSET;
@@ -387,68 +275,66 @@ const ParticleSphere = memo(function ParticleSphere({
       if (pointerAngle >= Math.PI * 2) pointerAngle -= Math.PI * 2;
       pointerDist = Math.hypot(px, py);
     }
-
     const baseOffset = isHolding.current ? 0.4 : 0;
+    let aimedIdx = -1, aimedIntensity = 0.1;
 
     for (let i = 0; i < arcRefs.current.length; i++) {
       const arc = arcRefs.current[i];
       if (!arc) continue;
-
-      const { centerAngle, cos, sin } = arcAngleData[i];
+      const { cos, sin } = arcAngleData[i];
       let arcTargetOffset = baseOffset;
 
       if (isHolding.current && pointerDist > 0.1) {
-        let angleDiff = Math.abs(pointerAngle - centerAngle);
+        let angleDiff = Math.abs(pointerAngle - (i * SLICE_ANGLE + SLICE_ANGLE / 2));
         if (angleDiff > Math.PI) angleDiff = 2 * Math.PI - angleDiff;
-
         const aimAccuracy = Math.max(0, 1 - angleDiff / (Math.PI / 3));
         const dragIntensity = Math.min(1, (pointerDist - 0.1) / 0.5);
-        const selectionIntensity = aimAccuracy * dragIntensity;
+        const sel = aimAccuracy * dragIntensity;
+        arcTargetOffset += 0.3 * sel;
 
-        arcTargetOffset += 0.3 * selectionIntensity;
-
-        const txt = textRefs.current[i];
-        if (txt) {
-          if (selectionIntensity > 0.1) {
-            txt.style.filter =
-              `drop-shadow(0 0 ${20 * selectionIntensity}px rgba(107,156,255,${selectionIntensity * 1.5})) ` +
-              `drop-shadow(0 0 ${10 * selectionIntensity}px rgba(255,255,255,${selectionIntensity})) ` +
-              `brightness(${1 + selectionIntensity * 1.2})`;
-            txt.style.transform = `scale(${1 + selectionIntensity * 0.2})`;
-            txt.style.transition = 'none';
-          } else {
-            txt.style.filter = 'none';
-            txt.style.transform = 'scale(1)';
+        if (!isMobile) {
+          const t = textRefs.current[i];
+          if (t) {
+            if (sel > 0.1) {
+              t.style.filter =
+                `drop-shadow(0 0 ${20 * sel}px rgba(107,156,255,${sel * 1.5})) ` +
+                `drop-shadow(0 0 ${10 * sel}px rgba(255,255,255,${sel})) brightness(${1 + sel * 1.2})`;
+              t.style.transform = `scale(${1 + sel * 0.2})`;
+              t.style.transition = 'none';
+            } else {
+              t.style.filter = 'none';
+              t.style.transform = 'scale(1)';
+            }
           }
+        } else if (sel > aimedIntensity) {
+          aimedIntensity = sel; aimedIdx = i;
         }
-      } else {
-        const txt = textRefs.current[i];
-        if (txt) {
-          txt.style.filter = 'none';
-          txt.style.transform = 'scale(1)';
-          txt.style.transition = 'all 0.2s ease-out';
-        }
+      } else if (!isMobile) {
+        const t = textRefs.current[i];
+        if (t) { t.style.filter = 'none'; t.style.transform = 'scale(1)'; t.style.transition = 'all 0.2s ease-out'; }
       }
 
-      // Lerp arc position
-      const targetX = cos * arcTargetOffset;
-      const targetY = sin * arcTargetOffset;
-      const dx = targetX - arc.position.x;
-      const dy = targetY - arc.position.y;
+      const tx = cos * arcTargetOffset, ty = sin * arcTargetOffset;
+      const dx = tx - arc.position.x, dy = ty - arc.position.y;
+      arc.position.x = Math.abs(dx) > 1e-4 ? arc.position.x + dx * MORPH_LERP * delta : tx;
+      arc.position.y = Math.abs(dy) > 1e-4 ? arc.position.y + dy * MORPH_LERP * delta : ty;
+    }
 
-      arc.position.x = Math.abs(dx) > 1e-4
-        ? arc.position.x + dx * MORPH_LERP_FACTOR * delta
-        : targetX;
-      arc.position.y = Math.abs(dy) > 1e-4
-        ? arc.position.y + dy * MORPH_LERP_FACTOR * delta
-        : targetY;
+    if (isMobile) {
+      const newAim = isHolding.current ? aimedIdx : -1;
+      if (newAim !== aimedRef.current) {
+        const prev = aimedRef.current;
+        if (prev >= 0 && textRefs.current[prev]) textRefs.current[prev]!.classList.remove('aimed');
+        if (newAim >= 0 && textRefs.current[newAim]) textRefs.current[newAim]!.classList.add('aimed');
+        aimedRef.current = newAim;
+      }
     }
   });
 
-  /* ── Render ── */
+  const textDist = isMobile ? RING_TIP + 0.18 : radius + 0.65;
+
   return (
     <group>
-      {/* Invisible hit sphere for raycasting */}
       <mesh
         onPointerMove={handlePointerMove}
         onPointerOut={handlePointerOut}
@@ -459,49 +345,32 @@ const ParticleSphere = memo(function ParticleSphere({
         <meshBasicMaterial visible={false} />
       </mesh>
 
-      {/* Ring arcs + labels */}
       <group ref={ringGroupRef}>
         {SKILLS_DATA.map((skill, i) => {
           const rotation = i * SLICE_ANGLE + GLOBAL_OFFSET;
           const tipAngle = rotation + SLICE_ANGLE / 2;
-          const textDist = radius + 0.65;
           const textX = Math.cos(tipAngle) * textDist;
           const textY = Math.sin(tipAngle) * textDist;
-
           return (
-            <group key={skill.id} ref={(el) => { arcRefs.current[i] = el; }}>
-              <mesh
-                rotation={[0, 0, rotation]}
-                material={ringMaterial}
-                geometry={ringGeometry}
-              />
-              <Html
-                position={[textX, textY, 0]}
-                center
-                zIndexRange={[100, 0]}
-                portal={portalRef as any}
-              >
+            <group key={skill.id ?? i} ref={(el) => { arcRefs.current[i] = el; }}>
+              <mesh rotation={[0, 0, rotation]} material={ringMaterial} geometry={ringGeometry} />
+              <Html position={[textX, textY, 0]} center zIndexRange={[100, 0]} portal={portalRef as any}>
                 <div
                   ref={(el) => { textRefs.current[i] = el; }}
                   className={isMobile ? 'skills-3d-label-mobile' : 'silver-glow-text label'}
                   style={{
                     opacity: 0,
-                    visibility: isMobile ? 'hidden' : 'visible',
-                    display: isMobile ? 'flex' : 'none',
-                    pointerEvents: isMobile ? 'auto' : 'none',
+                    pointerEvents: 'none',
                     whiteSpace: 'nowrap',
-                    cursor: isMobile ? 'pointer' : 'default',
-                    ...(isMobile ? { alignItems: 'center', justifyContent: 'center' } : { fontSize: '14px', letterSpacing: '0.15em' }),
+                    ...(isMobile
+                      ? { display: 'flex', alignItems: 'center', justifyContent: 'center' }
+                      : { display: 'none', fontSize: '14px', letterSpacing: '0.15em' }),
                   }}
-                  onClick={isMobile ? () => onSelectRef.current?.(i) : undefined}
                 >
                   {isMobile ? (
                     <skill.icon
-                      size={20}
-                      style={{
-                        fill: 'url(#animatedPremiumGrad)',
-                        filter: 'drop-shadow(0 0 4px rgba(255,255,255,0.3))',
-                      }}
+                      size={18}
+                      style={{ fill: 'url(#animatedPremiumGrad)', filter: 'drop-shadow(0 0 4px rgba(255,255,255,0.3))' }}
                     />
                   ) : (
                     skill.category
@@ -513,25 +382,11 @@ const ParticleSphere = memo(function ParticleSphere({
         })}
       </group>
 
-      {/* Particle cloud */}
       <points ref={pointsRef} frustumCulled={false}>
         <bufferGeometry>
-          <bufferAttribute
-            attach="attributes-position"
-            count={count}
-            array={dynamicPositions}
-            itemSize={3}
-          />
+          <bufferAttribute attach="attributes-position" count={count} array={dynamicPositions} itemSize={3} />
         </bufferGeometry>
-        <pointsMaterial
-          ref={materialRef}
-          size={0.012}
-          color="#FFFFFF"
-          transparent
-          opacity={0.8}
-          sizeAttenuation
-          depthWrite={false}
-        />
+        <pointsMaterial ref={materialRef} size={0.012} color="#FFFFFF" transparent opacity={0.8} sizeAttenuation depthWrite={false} />
       </points>
     </group>
   );
