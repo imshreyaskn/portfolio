@@ -99,17 +99,27 @@ const PlanetMatrix = () => {
       <circle cx="50" cy="50" r="47" fill="#06080C" stroke={`url(#${gradId})`} strokeWidth="6" />
       <clipPath id={clipId}><circle cx="50" cy="50" r="47" /></clipPath>
       <g clipPath={`url(#${clipId})`}>
-        {/* Horizontal grid */}
-        <path d="M 5 25 L 95 25 M 0 40 L 100 40 M 0 60 L 100 60 M 5 75 L 95 75" fill="transparent" stroke={`url(#${gradId})`} strokeWidth="1.5" opacity="0.4" />
-        {/* Vertical grid */}
-        <path d="M 25 5 L 25 95 M 40 0 L 40 100 M 60 0 L 60 100 M 75 5 L 75 95" fill="transparent" stroke={`url(#${gradId})`} strokeWidth="1.5" opacity="0.4" />
-        {/* Circuit nodes */}
-        <path d="M 25 40 L 40 60 L 60 60 L 75 40" fill="transparent" stroke={`url(#${gradId})`} strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round" />
-        <circle cx="25" cy="40" r="3.5" fill="#06080C" stroke={`url(#${gradId})`} strokeWidth="2.5" />
-        <circle cx="75" cy="40" r="3.5" fill="#06080C" stroke={`url(#${gradId})`} strokeWidth="2.5" />
-        <circle cx="50" cy="60" r="3.5" fill="#06080C" stroke={`url(#${gradId})`} strokeWidth="2.5" />
-        <path d="M 50 60 L 50 75" fill="transparent" stroke={`url(#${gradId})`} strokeWidth="3.5" strokeLinecap="round" />
-        <circle cx="50" cy="75" r="2.5" fill={`url(#${gradId})`} />
+        {/* Equator and Prime Meridian */}
+        <path d="M 0 50 L 100 50" fill="none" stroke={`url(#${gradId})`} strokeWidth="1.5" opacity="0.4" />
+        <path d="M 50 0 L 50 100" fill="none" stroke={`url(#${gradId})`} strokeWidth="1.5" opacity="0.4" />
+        
+        {/* Latitudes (curving toward equator to create 3D spherical depth) */}
+        <path d="M -10 20 Q 50 58 110 20" fill="none" stroke={`url(#${gradId})`} strokeWidth="2.5" opacity="0.75" />
+        <path d="M -10 80 Q 50 42 110 80" fill="none" stroke={`url(#${gradId})`} strokeWidth="2.5" opacity="0.75" />
+        
+        {/* Longitudes (curving toward meridian to create 3D spherical depth) */}
+        <path d="M 20 -10 Q 58 50 20 110" fill="none" stroke={`url(#${gradId})`} strokeWidth="2.5" opacity="0.75" />
+        <path d="M 80 -10 Q 42 50 80 110" fill="none" stroke={`url(#${gradId})`} strokeWidth="2.5" opacity="0.75" />
+        
+        {/* Core firewall nexus */}
+        <circle cx="50" cy="50" r="6" fill="#06080C" stroke={`url(#${gradId})`} strokeWidth="2" />
+        <circle cx="50" cy="50" r="2.5" fill={`url(#${gradId})`} />
+        
+        {/* Intersection glowing data nodes */}
+        <circle cx="31" cy="31" r="2" fill={`url(#${gradId})`} opacity="0.9" />
+        <circle cx="69" cy="69" r="2" fill={`url(#${gradId})`} opacity="0.9" />
+        <circle cx="69" cy="31" r="2" fill={`url(#${gradId})`} opacity="0.9" />
+        <circle cx="31" cy="69" r="2" fill={`url(#${gradId})`} opacity="0.9" />
       </g>
     </svg>
   );
