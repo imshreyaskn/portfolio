@@ -3,7 +3,8 @@
 // on the compositor together with the canvas → zero cross-browser desync.
 import { useState, useMemo, useRef, useLayoutEffect, useCallback, memo } from 'react';
 import { motion, AnimatePresence, useInView } from 'framer-motion';
-import { View, PerspectiveCamera } from '@react-three/drei';
+import { Canvas } from '@react-three/fiber';
+import { PerspectiveCamera } from '@react-three/drei';
 import Saturn from './Saturn';
 import ProjectNodes from './ProjectNodes';
 import { generateParticles, PROJECT_TECH_STACKS } from './data';
@@ -91,25 +92,8 @@ const Projects = () => {
       {/* Ambient glow — CSS-anchored behind the canvas (was drei Html) */}
       <div className="saturn-glow" aria-hidden="true" />
 
-      {/* 3D canvas — the ONLY rAF-driven content in this section.
-          NOTE: set dpr on the parent <Canvas> (e.g. dpr={[1,2]}); View
-          inherits it. capability.dpr documents the recommended range. */}
-      <div className="projects-canvas-wrapper">
-        <View className="projects-canvas-view">
-          <PerspectiveCamera makeDefault position={[0, 0, 8]} fov={45} />
-          <group position={[0, posY, 0]}>
-            <Saturn
-              isPaused={!inView}
-              raymarchSteps={capability.raymarchSteps}
-              circleSegments={capability.circleSegments}
-            />
-          </group>
-        </View>
-      </div>
-
-      {/* 2D overlay — plain DOM anchored to the projected black-hole center.
-          Scrolls on the compositor with the canvas → no desync in any browser. */}
-      <div className="projects-overlay-anchor" aria-hidden="true">
+      {/* 2D threads overlay — hangs down BEHIND the black hole canvas (z-index 5) */}
+      <div className="projects-overlay-anchor projects-threads-anchor" aria-hidden="true">
         <div className="projects-overlay-container projects-threads-overlay">
           <ThreadsSVG />
           <div className="projects-swarm-mask">
@@ -126,7 +110,28 @@ const Projects = () => {
             ))}
           </div>
         </div>
+      </div>
 
+      {/* 3D canvas — local Canvas child of section so it scrolls in 1:1 compositor sync with DOM threads (z-index 10) */}
+      <div className="projects-canvas-wrapper">
+        <Canvas
+          gl={{ antialias: false, powerPreference: 'high-performance' }}
+          dpr={capability.dpr}
+          style={{ width: '100%', height: '100%', pointerEvents: 'none' }}
+        >
+          <PerspectiveCamera makeDefault position={[0, 0, 8]} fov={45} />
+          <group position={[0, posY, 0]}>
+            <Saturn
+              isPaused={!inView}
+              raymarchSteps={capability.raymarchSteps}
+              circleSegments={capability.circleSegments}
+            />
+          </group>
+        </Canvas>
+      </div>
+
+      {/* 2D planet nodes overlay — positioned in FRONT of the black hole canvas (z-index 15) */}
+      <div className="projects-overlay-anchor projects-nodes-anchor" aria-hidden="true">
         <div className="projects-overlay-container projects-nodes-overlay">
           <ProjectNodes
             isTouchPrimary={isTouchPrimary}

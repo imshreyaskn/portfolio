@@ -79,9 +79,11 @@
   top: var(--bh-anchor-y);
   width: 0;
   height: 0;
-  z-index: 15;
   pointer-events: none;
 }
+
+.projects-threads-anchor { z-index: 5; } /* behind black hole canvas (10) */
+.projects-nodes-anchor   { z-index: 15; } /* in front of black hole canvas (10) */
 
 /* Overlay containers hang down from the anchor point */
 .projects-overlay-container {
