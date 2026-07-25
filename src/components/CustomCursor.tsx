@@ -210,8 +210,8 @@ const CustomCursor = () => {
       let blackHoleSuctionFactor = 1.0;
 
       if (bhRectRef.current.isValid && virtualX !== -100 && !hovering) {
-        const currentBhViewportX = bhRectRef.current.x - scrollPosRef.current.x;
-        const currentBhViewportY = bhRectRef.current.y - scrollPosRef.current.y;
+        const currentBhViewportX = bhRectRef.current.x - scrollPosRef.x;
+        const currentBhViewportY = bhRectRef.current.y - scrollPosRef.y;
 
         const gdx = currentBhViewportX - virtualX;
         const gdy = currentBhViewportY - virtualY;

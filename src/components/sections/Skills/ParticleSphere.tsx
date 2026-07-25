@@ -398,7 +398,7 @@ const ParticleSphere = memo(function ParticleSphere({
           return (
             <group key={skill.id ?? i} ref={(el) => { arcRefs.current[i] = el; }}>
               <mesh rotation={[0, 0, rotation]} material={ringMaterial} geometry={ringGeometry} />
-              <Html position={[textX, textY, 0]} center zIndexRange={[100, 0]} portal={portalRef as any}>
+              <Html position={[textX, textY, 0]} center zIndexRange={[100, 0]}>
                 <div
                   ref={(el) => { textRefs.current[i] = el; }}
                   className={isMobile ? 'skills-3d-label-mobile' : 'silver-glow-text label'}
