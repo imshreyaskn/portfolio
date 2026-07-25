@@ -90,6 +90,31 @@ const PlanetCratered = () => {
   );
 };
 
+const PlanetMatrix = () => {
+  const clipId = useId();
+  const gradId = useId();
+  return (
+    <svg viewBox="0 0 100 100" style={{ width: '100%', height: '100%' }} aria-hidden="true">
+      <defs><SilverGradient id={gradId} /></defs>
+      <circle cx="50" cy="50" r="47" fill="#06080C" stroke={`url(#${gradId})`} strokeWidth="6" />
+      <clipPath id={clipId}><circle cx="50" cy="50" r="47" /></clipPath>
+      <g clipPath={`url(#${clipId})`}>
+        {/* Horizontal grid */}
+        <path d="M 5 25 L 95 25 M 0 40 L 100 40 M 0 60 L 100 60 M 5 75 L 95 75" fill="transparent" stroke={`url(#${gradId})`} strokeWidth="1.5" opacity="0.4" />
+        {/* Vertical grid */}
+        <path d="M 25 5 L 25 95 M 40 0 L 40 100 M 60 0 L 60 100 M 75 5 L 75 95" fill="transparent" stroke={`url(#${gradId})`} strokeWidth="1.5" opacity="0.4" />
+        {/* Circuit nodes */}
+        <path d="M 25 40 L 40 60 L 60 60 L 75 40" fill="transparent" stroke={`url(#${gradId})`} strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round" />
+        <circle cx="25" cy="40" r="3.5" fill="#06080C" stroke={`url(#${gradId})`} strokeWidth="2.5" />
+        <circle cx="75" cy="40" r="3.5" fill="#06080C" stroke={`url(#${gradId})`} strokeWidth="2.5" />
+        <circle cx="50" cy="60" r="3.5" fill="#06080C" stroke={`url(#${gradId})`} strokeWidth="2.5" />
+        <path d="M 50 60 L 50 75" fill="transparent" stroke={`url(#${gradId})`} strokeWidth="3.5" strokeLinecap="round" />
+        <circle cx="50" cy="75" r="2.5" fill={`url(#${gradId})`} />
+      </g>
+    </svg>
+  );
+};
+
 /* ─── Hit-area wrapper ─── */
 interface PlanetHitAreaProps {
   name: string;
@@ -199,10 +224,10 @@ const ProjectNodes = ({ isTouchPrimary, setHoveredPlanet, onTapPlanet }: Project
         <PlanetGasGiant />
       </PlanetHitArea>
 
-      <PlanetHitArea name="Lurien Matrix" visualSize={lg} top="34%" left="65.72%"
+      <PlanetHitArea name="Lurien Matrix" visualSize={sm} top="34%" left="65.72%"
         isTouchPrimary={isTouchPrimary} setHoveredPlanet={setHoveredPlanet}
         onTapPlanet={onTapPlanet} hoverAnim={HOVER_CCW}>
-        <PlanetCratered />
+        <PlanetMatrix />
       </PlanetHitArea>
 
       <PlanetHitArea name="Alethia" visualSize={sm} top="46%" left="57.36%"
