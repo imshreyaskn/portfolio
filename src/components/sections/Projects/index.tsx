@@ -92,7 +92,7 @@ const Projects = () => {
         <Canvas
           gl={{ antialias: false, powerPreference: 'high-performance' }}
           dpr={capability.dpr}
-          style={{ width: '100%', height: '100%', pointerEvents: 'none' }}
+          style={{ width: '100%', height: '100%' }}
         >
           <PerspectiveCamera makeDefault position={[0, 0, 8]} fov={45} />
           <group position={[0, posY, 0]}>
