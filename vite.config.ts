@@ -7,17 +7,26 @@ export default defineConfig({
   build: {
     cssCodeSplit: true,
     target: 'esnext',
+    minify: 'esbuild',
     rollupOptions: {
       output: {
         manualChunks(id) {
-          if (id.includes('three') || id.includes('@react-three')) {
-            return 'three-vendor';
-          }
-          if (id.includes('framer-motion')) {
-            return 'framer';
+          if (id.includes('node_modules')) {
+            if (id.includes('three') || id.includes('@react-three')) {
+              return 'three-vendor';
+            }
+            if (id.includes('framer-motion')) {
+              return 'framer';
+            }
+            if (id.includes('react-icons')) {
+              return 'icons';
+            }
           }
         }
       }
     }
+  },
+  optimizeDeps: {
+    include: ['three', '@react-three/fiber', '@react-three/drei', 'framer-motion']
   }
 })
