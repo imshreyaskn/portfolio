@@ -162,7 +162,10 @@ const ParticleSphere = memo(function ParticleSphere({
       isHolding.current = true;
     }
   }, []);
-  const handlePointerUp = useCallback(() => { isHolding.current = false; }, []);
+  const handlePointerUp = useCallback(() => { 
+    isHolding.current = false;
+    holdPending.current = false;
+  }, []);
   const handlePointerOut = useCallback(() => { isInteracting.current = false; }, []);
 
   useEffect(() => {
