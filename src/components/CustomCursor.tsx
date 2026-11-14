@@ -99,16 +99,25 @@ const CustomCursor = () => {
     };
     window.addEventListener('scroll', updateScrollPos, { passive: true });
 
+    let isAway = false;
+    let isPressed = false;
+    const handleMouseDown = () => { isPressed = true; };
+    const handleMouseUp = () => { isPressed = false; };
+
     const handleMouseMove = (e: MouseEvent) => {
       rawX = e.clientX;
       rawY = e.clientY;
+      if (isAway) {
+        isAway = false;
+        document.documentElement.classList.remove('cursor-away');
+      }
       if (virtualX === -100) {
         virtualX = rawX;
         virtualY = rawY;
       }
     };
 
-    const HOVER_SELECTOR = 'a, button, [role="button"], [data-hoverable], input, textarea';
+    const HOVER_SELECTOR = 'a, button, [role="button"], [data-hoverable], input, textarea, select, label, summary, [tabindex]:not([tabindex="-1"])';
 
     const handleMouseOver = (e: MouseEvent) => {
       const target = e.target as HTMLElement | null;
@@ -127,6 +136,9 @@ const CustomCursor = () => {
 
     const handleMouseLeave = () => {
       setCursorPosition(0, 0, false);
+      // Fade the cursor out instead of leaving it stuck at the window edge.
+      isAway = true;
+      document.documentElement.classList.add('cursor-away');
     };
 
     // Throttled/Debounced Rect Cacher
@@ -170,13 +182,17 @@ const CustomCursor = () => {
     window.addEventListener('resize', handleResize, { passive: true });
     window.addEventListener('scroll', handleScroll, { passive: true });
     
+    window.addEventListener('mousedown', handleMouseDown, { passive: true });
+    window.addEventListener('mouseup', handleMouseUp, { passive: true });
+
     // Initial fetch
-    setTimeout(updateBhRect, 100);
+    const initialRectTimer = setTimeout(updateBhRect, 100);
 
     // --------------------------------------------------------
     // RENDER LOOP (World Class Physics Engine)
     // --------------------------------------------------------
     let lastHoverApplied = false;
+    let currentPressScale = 1;
     
     const animate = (time: number) => {
       // 1. Time Update (Delta Time)
@@ -279,16 +295,18 @@ const CustomCursor = () => {
       }
 
       currentHoverScale = damp(currentHoverScale, targetHoverScale, 15.0, dt);
+      // Press feedback: a quick squeeze while the mouse button is held.
+      currentPressScale = damp(currentPressScale, isPressed ? 0.8 : 1, 25.0, dt);
 
       // 4. Render Main Cursor (ponytail: omit .toFixed string allocations in hot rAF)
       if (cursorRef.current) {
-        const finalScaleX = currentScaleX * currentHoverScale;
-        const finalScaleY = currentScaleY * currentHoverScale;
+        const finalScaleX = currentScaleX * currentHoverScale * currentPressScale;
+        const finalScaleY = currentScaleY * currentHoverScale * currentPressScale;
         const cx = currentX - CURSOR_HALF_SIZE;
         const cy = currentY - CURSOR_HALF_SIZE;
         
         const transform = hovering 
-          ? `translate3d(${cx}px, ${cy}px, 0) scale(${currentHoverScale})`
+          ? `translate3d(${cx}px, ${cy}px, 0) scale(${currentHoverScale * currentPressScale})`
           : `translate3d(${cx}px, ${cy}px, 0) rotate(${currentAngle}deg) scale(${finalScaleX}, ${finalScaleY})`;
         
         if (cursorRef.current.style.transform !== transform) {
@@ -364,7 +382,23 @@ const CustomCursor = () => {
 
     frameId = requestAnimationFrame(animate);
 
+    // Stop the physics loop entirely while the tab is hidden.
+    const handleVisibility = () => {
+      cancelAnimationFrame(frameId);
+      if (!document.hidden) {
+        lastTime = performance.now();
+        frameId = requestAnimationFrame(animate);
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibility);
+
     return () => {
+      document.removeEventListener('visibilitychange', handleVisibility);
+      document.removeEventListener('mouseleave', handleMouseLeave);
+      window.removeEventListener('mousedown', handleMouseDown);
+      window.removeEventListener('mouseup', handleMouseUp);
+      document.documentElement.classList.remove('cursor-away');
+      clearTimeout(initialRectTimer);
       window.removeEventListener('mousemove', handleMouseMove);
       document.removeEventListener('mouseover', handleMouseOver);
       document.removeEventListener('mouseout', handleMouseOut);
@@ -408,6 +442,7 @@ const CustomCursor = () => {
           <div
             key={i}
             ref={el => { trailRefs.current[i] = el; }}
+            className="liquid-cursor-trail"
             aria-hidden="true"
             style={{
               position: 'fixed',

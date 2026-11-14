@@ -126,7 +126,7 @@ interface PlanetHitAreaProps {
   visualSize: string;
   top: string;
   left: string;
-  /** Touch-primary input → tap-to-reveal; pointer → hover + click-through to GitHub */
+  /** Touch-primary input → tap-to-reveal; pointer → hover + click-through to the project */
   isTouchPrimary: boolean;
   setHoveredPlanet: (p: string | null) => void;
   onTapPlanet: (name: string) => void;
@@ -147,34 +147,33 @@ const PlanetHitArea = ({
 }: PlanetHitAreaProps) => {
   const href = PROJECT_LINKS[name];
 
-  const handleClick = () => {
+  // A real link: middle-click, "open in new tab" and screen readers all work.
+  // Touch-primary devices use the first tap to reveal details instead.
+  const handleClick = (e: React.MouseEvent) => {
     if (isTouchPrimary) {
+      e.preventDefault();
       onTapPlanet(name);
-    } else {
-      window.open(href, '_blank', 'noopener,noreferrer');
     }
   };
 
   return (
-    <motion.div
-      role="button"
+    <motion.a
+      href={href}
+      target="_blank"
+      rel="noopener noreferrer"
       className="planet-hit-area"
-      aria-label={`${name} — ${PROJECT_TECH_STACKS[name]}. ${
-        isTouchPrimary ? 'Tap to toggle details.' : 'Opens GitHub repository.'
-      }`}
+      aria-label={`${name}: ${PROJECT_TECH_STACKS[name]}. Opens in a new tab.`}
       data-hoverable="true"
+      draggable={false}
       onHoverStart={() => !isTouchPrimary && setHoveredPlanet(name)}
       onHoverEnd={() => !isTouchPrimary && setHoveredPlanet(null)}
+      // Keyboard focus shows the same details card as hover.
+      onFocus={() => setHoveredPlanet(name)}
+      onBlur={() => setHoveredPlanet(null)}
       whileHover={!isTouchPrimary ? hoverAnim : undefined}
+      whileFocus={hoverAnim}
       whileTap={TAP}
       onClick={handleClick}
-      tabIndex={0}
-      onKeyDown={(e) => {
-        if (e.key === 'Enter' || e.key === ' ') {
-          e.preventDefault();
-          handleClick();
-        }
-      }}
       initial={{ x: "-50%", y: "-50%" }}
       style={{
         x: "-50%",
@@ -205,7 +204,7 @@ const PlanetHitArea = ({
       >
         {children}
       </div>
-    </motion.div>
+    </motion.a>
   );
 };
 

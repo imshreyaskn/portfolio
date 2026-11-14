@@ -1,7 +1,7 @@
 // index.tsx — Projects section. The 2D overlay (threads + planets) and the
 // saturn glow are plain CSS-anchored DOM boxes, NOT drei <Html>. They scroll
 // on the compositor together with the canvas → zero cross-browser desync.
-import { useState, useMemo, useRef, useLayoutEffect, useCallback, memo } from 'react';
+import { useState, useMemo, useRef, useLayoutEffect, useEffect, useCallback, memo } from 'react';
 import { motion, AnimatePresence, useInView } from 'framer-motion';
 import { Canvas } from '@react-three/fiber';
 import { PerspectiveCamera } from '@react-three/drei';
@@ -14,6 +14,8 @@ import { useViewport } from '../../../hooks/useViewport';
 import { useMediaQuery } from '../../../hooks/useMediaQuery';
 import GravityDust from '../../GravityDust';
 import './Projects.css';
+import { useWarmup } from '../../../hooks/useWarmup';
+import RenderGate from '../../RenderGate';
 
 /* ─── Hanging threads SVG (static geometry, shared gradient) ─── */
 const ThreadsSVG = memo(function ThreadsSVG() { return (
@@ -68,6 +70,16 @@ const Projects = () => {
 
   // Pause the raymarcher when <30% visible (was amount:0 → froze at edges)
   const inView = useInView(sectionRef, { amount: 0.3 });
+  // Draw only while the section is on (or about to come on) screen; otherwise
+  // r3f draws the 110-step raymarcher every frame offscreen. useWarmup keeps
+  // drawing for the first few seconds (behind the loading screen) so shaders
+  // compile up front instead of hitching on first scroll. See RenderGate.
+  const nearView = useInView(sectionRef, { margin: '200px 0px' });
+  const warm = useWarmup();
+  const drawRef = useRef(true);
+  useEffect(() => {
+    drawRef.current = warm || nearView;
+  }, [warm, nearView]);
 
   // Black-hole screen anchor, recomputed only on resize/orientation
   const { posY, anchorY, glowY } = useBlackHoleLayout();
@@ -95,6 +107,7 @@ const Projects = () => {
           style={{ width: '100%', height: '100%' }}
         >
           <PerspectiveCamera makeDefault position={[0, 0, 8]} fov={45} />
+          <RenderGate activeRef={drawRef} />
           <group position={[0, posY, 0]}>
             <Saturn
               isPaused={!inView}
@@ -110,7 +123,7 @@ const Projects = () => {
 
   const projectNodesElement = useMemo(
     () => (
-      <div className="projects-overlay-anchor projects-nodes-anchor" aria-hidden="true">
+      <nav className="projects-overlay-anchor projects-nodes-anchor" aria-label="Projects">
         <div className="projects-overlay-container projects-nodes-overlay">
           <ProjectNodes
             isTouchPrimary={isTouchPrimary}
@@ -118,13 +131,14 @@ const Projects = () => {
             onTapPlanet={handlePlanetTap}
           />
         </div>
-      </div>
+      </nav>
     ),
     [isTouchPrimary, handleHover, handlePlanetTap],
   );
 
   return (
-    <section id="projects" className="projects-section" ref={sectionRef} aria-label="Projects">
+    <section id="projects" className="projects-section" ref={sectionRef} aria-labelledby="projects-heading">
+      <h2 id="projects-heading" className="sr-only">projects</h2>
       <GravityDust active={inView} />
       {/* Ambient glow — CSS-anchored behind the canvas (was drei Html) */}
       <div className="saturn-glow" aria-hidden="true" />

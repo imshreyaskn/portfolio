@@ -1,7 +1,7 @@
 // lib/readiness.ts — the Arrival's readiness gates.
 // Every line on screen maps to a real promise. Nothing theatrical is fake.
-import { RAYMARCH_VERTEX, RAYMARCH_FRAGMENT } from '../components/sections/Projects/Saturn';
-import { RING_VERTEX_SHADER, RING_FRAGMENT_SHADER } from '../components/sections/Skills/ParticleSphere';
+import { RAYMARCH_VERTEX, RAYMARCH_FRAGMENT } from '../components/sections/Projects/shaders';
+import { RING_VERTEX_SHADER, RING_FRAGMENT_SHADER } from '../components/sections/Skills/shaders';
 
 export type LineState = 'queued' | 'working' | 'done';
 

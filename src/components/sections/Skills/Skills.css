@@ -56,7 +56,7 @@
 
 .skills-hybrid-layout { display: flex; flex-direction: column; gap: 2rem; max-width: 550px; }
 .skills-editorial-header { display: flex; flex-direction: column; gap: 0.75rem; }
-.skills-editorial-title { font-family: 'Jost', sans-serif; font-size: clamp(2rem, 3.5vw, 3rem); font-weight: 300; letter-spacing: 0.2em; }
+.skills-editorial-title { font-family: 'Jost', sans-serif; font-size: clamp(2rem, 3.5vw, 3rem); font-weight: 300; letter-spacing: 0.2em; line-height: 1.15; }
 .skills-editorial-desc { font-family: 'Jost', sans-serif; font-size: 1.05rem; line-height: 1.6; color: rgba(255, 255, 255, 0.65); }
 
 .skills-icon-chip {
@@ -132,4 +132,43 @@
 
 @media (max-width: 767px) and (max-height: 700px) {
   .skills-details-pane { padding: calc(env(safe-area-inset-top, 0px) + 76px) 1rem 2.5rem; }
+}
+
+/* ─── Keyboard route into the sphere ───────────────────────
+   Invisible until one of its buttons gets keyboard focus; then it shows as
+   a row of chips under the sphere. Mouse users never see it. */
+.skills-kbd-nav {
+  position: absolute;
+  left: 50%;
+  bottom: clamp(56px, 9vh, 96px);
+  z-index: var(--z-raised);
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--sp-2);
+  max-width: min(90vw, 760px);
+  padding: 0;
+  list-style: none;
+  transform: translateX(-50%);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--dur-fast) var(--ease-out);
+}
+.skills-kbd-nav:focus-within {
+  opacity: 1;
+  pointer-events: auto;
+}
+.skills-kbd-chip {
+  padding: 8px 14px;
+  font-family: var(--ff-accent);
+  font-size: var(--fs-body-sm);
+  letter-spacing: 0.06em;
+  color: var(--text-primary);
+  background: rgba(0, 0, 0, 0.6);
+  border: 1px solid var(--line-visible);
+  transition: border-color var(--dur-fast) var(--ease-out), background-color var(--dur-fast) var(--ease-out);
+}
+.skills-kbd-chip[aria-pressed="true"] {
+  border-color: var(--line-bright);
+  background: rgba(255, 255, 255, 0.1);
 }

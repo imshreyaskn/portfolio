@@ -1,4 +1,5 @@
 import { motion } from 'framer-motion';
+import { EASE_OUT, DUR } from '../../lib/motion';
 import './Footer.css';
 
 const Footer = ({ onOpenConnectModal }: { onOpenConnectModal: () => void }) => {
@@ -6,7 +7,13 @@ const Footer = ({ onOpenConnectModal }: { onOpenConnectModal: () => void }) => {
     <footer id="footer" className="footer-section">
       <div className="footer-animated-border" />
       <div className="footer-content">
-        <div className="footer-links">
+        <motion.div
+          className="footer-links"
+          initial={{ opacity: 0, y: 12 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, amount: 0.6 }}
+          transition={{ duration: DUR.reveal, ease: EASE_OUT }}
+        >
           <motion.a 
             href="https://github.com/imshreyaskn" 
             target="_blank" 
@@ -29,7 +36,9 @@ const Footer = ({ onOpenConnectModal }: { onOpenConnectModal: () => void }) => {
             linkedin
           </motion.a>
 
-          <motion.button 
+          <motion.button
+            type="button"
+            aria-haspopup="dialog"
             onClick={onOpenConnectModal}
             className="footer-text-link footer-mail-btn"
             whileHover={{ scale: 1.05 }}
@@ -48,7 +57,7 @@ const Footer = ({ onOpenConnectModal }: { onOpenConnectModal: () => void }) => {
           >
             resume
           </motion.a>
-        </div>
+        </motion.div>
       </div>
     </footer>
   );

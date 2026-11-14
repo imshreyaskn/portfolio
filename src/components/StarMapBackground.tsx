@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react';
+import { prefersReducedMotion } from '../lib/motion';
 
 type DepthLayer = 0 | 1 | 2;
 
@@ -26,7 +27,8 @@ const StarMapBackground = () => {
     if (!ctx) return;
     
 
-    const motionMultiplier = 1;
+    // Reduced motion: stars hold still (no drift, parallax or scroll shift).
+    const motionMultiplier = prefersReducedMotion() ? 0 : 1;
 
     let animationFrameId: number;
     let particles: {x: number, y: number, rx: number, ry: number, vx: number, vy: number, radius: number, z: DepthLayer}[] = [];

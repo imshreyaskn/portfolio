@@ -6,32 +6,26 @@ import {
   REVISIT_DWELL_MS,
   TASK_TIMEOUT_MS,
   HARD_CAP_MS,
-  READINESS_LINES,
   withTimeout,
-  type LineState,
-  type ReadinessLineId,
 } from './readiness';
 
 export interface ReadinessState {
   progress: number;
-  lines: Record<ReadinessLineId, LineState>;
   ready: boolean;
 }
 
 export function useReadiness(): ReadinessState {
   const [progress, setProgress] = useState(0);
-  const [lines, setLines] = useState<Record<ReadinessLineId, LineState>>(
-    () =>
-      Object.fromEntries(READINESS_LINES.map((l) => [l.id, 'queued'])) as Record<
-        ReadinessLineId,
-        LineState
-      >,
-  );
   const [ready, setReady] = useState(false);
   const progressRef = useRef(0);
 
   useEffect(() => {
-    const revisit = sessionStorage.getItem('observatory-visited') === '1';
+    let revisit = false;
+    try {
+      revisit = sessionStorage.getItem('observatory-visited') === '1';
+    } catch {
+      /* storage blocked (private mode, strict settings) */
+    }
     const dwell = revisit ? REVISIT_DWELL_MS : DWELL_MS;
 
     const tasks = buildReadinessTasks();
@@ -53,12 +47,10 @@ export function useReadiness(): ReadinessState {
       }
     };
 
-    // All tasks in parallel; lines flip to 'done' as each lands.
+    // All tasks run in parallel; each adds its weight to progress as it lands.
     tasks.forEach((task) => {
-      setLines((s) => ({ ...s, [task.id]: 'working' }));
       withTimeout((async () => task.run())(), TASK_TIMEOUT_MS).then(() => {
         doneWeight += task.weight;
-        setLines((s) => ({ ...s, [task.id]: 'done' }));
       });
     });
 
@@ -95,5 +87,5 @@ export function useReadiness(): ReadinessState {
     };
   }, []);
 
-  return { progress, lines, ready };
+  return { progress, ready };
 }

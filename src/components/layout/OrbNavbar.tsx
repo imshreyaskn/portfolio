@@ -7,7 +7,7 @@ import { useAnimationFrame, dampFactor } from '../../hooks/useAnimationFrame';
 import { useCanHover } from '../../hooks/useMediaQuery';
 import { useSystemScale } from '../../hooks/useSystemScale';
 import { useActiveSection } from '../../hooks/useActiveSection';
-import tooltipStar from '../../assets/tooltip-star.png';
+import tooltipStar from '../../assets/tooltip-star.webp';
 import './OrbNavbar.css';
 
 export interface NavNode {
