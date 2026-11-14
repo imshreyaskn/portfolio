@@ -1,8 +1,8 @@
 import { useRef } from 'react';
-import { motion, useMotionValue, useSpring } from 'framer-motion';
+import { motion, useMotionValue, useSpring, type HTMLMotionProps } from 'framer-motion';
 
 interface MagneticButtonProps
-  extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+  extends Omit<HTMLMotionProps<'button'>, 'ref' | 'children'> {
   children: React.ReactNode;
   /** Radius of the attraction field beyond the button edge, in px. */
   field?: number;

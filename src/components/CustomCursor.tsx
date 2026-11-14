@@ -407,7 +407,7 @@ const CustomCursor = () => {
         return (
           <div
             key={i}
-            ref={el => trailRefs.current[i] = el}
+            ref={el => { trailRefs.current[i] = el; }}
             aria-hidden="true"
             style={{
               position: 'fixed',

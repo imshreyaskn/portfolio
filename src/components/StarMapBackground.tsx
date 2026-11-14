@@ -31,7 +31,6 @@ const StarMapBackground = () => {
     let animationFrameId: number;
     let particles: {x: number, y: number, rx: number, ry: number, vx: number, vy: number, radius: number, z: DepthLayer}[] = [];
     let resizeTimer: ReturnType<typeof setTimeout>;
-    let frameCount = 0;
     let currentConnectDistSq = STARFIELD_CONFIG.baseConnectDist * STARFIELD_CONFIG.baseConnectDist;
     
     // Pre-allocated flat arrays to eliminate GC overhead

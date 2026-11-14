@@ -78,7 +78,6 @@ const ParticleSphere = memo(function ParticleSphere({
   count = 300,
   radius = 0.5,
   onSelect,
-  portalRef,
   isPaused = false,
   isMobile = false,
 }: ParticleSphereProps) {
@@ -431,7 +430,7 @@ const ParticleSphere = memo(function ParticleSphere({
 
       <points ref={pointsRef} frustumCulled={false}>
         <bufferGeometry>
-          <bufferAttribute attach="attributes-position" count={count} array={dynamicPositions} itemSize={3} />
+          <bufferAttribute attach="attributes-position" args={[dynamicPositions, 3]} />
         </bufferGeometry>
         <pointsMaterial ref={materialRef} size={0.012} color="#FFFFFF" transparent opacity={0.8} sizeAttenuation depthWrite={false} />
       </points>
