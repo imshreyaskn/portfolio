@@ -103,18 +103,8 @@ const Experience = () => {
     setSelectedMoon(null);
   }, []);
 
-  const handleMoonKeyDown = useCallback(
-    (index: number) => (e: React.KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        setSelectedMoon(null);
-      }
-    },
-    [],
-  );
-
   /* ── Derived state ── */
 
-  const isPanelOpen = selectedMoon !== null;
   const selectedExperience = selectedMoon !== null ? EXPERIENCES[selectedMoon] : null;
 
   return (
@@ -186,7 +176,7 @@ const Experience = () => {
                         : 'bottom-right'
                   }`}
                   onClick={() => handleSelectMoon(index)}
-                  ariaLabel={exp.title}
+                  ariaLabel={exp.ariaSummary}
                   ariaPressed={selectedMoon === index}
                 />
 

@@ -28,10 +28,6 @@ const itemVariants: Variants = {
   },
 };
 
-const sectionInitial = { scale: 0.95, opacity: 0, filter: 'blur(10px)' };
-const sectionAnimate = { scale: 1, opacity: 1, filter: 'blur(0px)' };
-const sectionTransition = { duration: 1.5, ease: EASE_PREMIUM };
-
 /* ─── Component ─── */
 
 interface HeroProps {

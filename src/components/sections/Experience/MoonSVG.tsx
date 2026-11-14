@@ -1,5 +1,5 @@
 // MoonSVG.tsx — Accessible moon phase SVG with animated gradient
-import { memo, useId } from 'react';
+import { memo } from 'react';
 
 interface MoonSVGProps {
   phase: 0 | 1 | 2;
