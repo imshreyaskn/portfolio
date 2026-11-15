@@ -1,11 +1,11 @@
-import { motion, type Variants, type Easing } from 'framer-motion';
+import { motion, useReducedMotion, type Variants } from 'framer-motion';
 import { useCallback, useState } from 'react';
 import MagneticButton from '../MagneticButton';
 import './Hero.css';
 
-/* ─── Animation Constants (module-level: no re-creation per render) ─── */
+import { EASE_OUT as EASE_PREMIUM } from '../../lib/motion';
 
-const EASE_PREMIUM: Easing = [0.16, 1, 0.3, 1];
+/* ─── Animation Constants (module-level: no re-creation per render) ─── */
 
 const containerVariants: Variants = {
   hidden: { opacity: 0 },
@@ -38,7 +38,7 @@ interface HeroProps {
 
 const Hero = ({ onOpenConnectModal, start }: HeroProps) => {
   const [sheenDone, setSheenDone] = useState(false);
-  const reducedMotion = false; // Forced false to ensure animation plays
+  const reducedMotion = useReducedMotion() ?? false;
 
   const handleConnectClick = useCallback(() => {
     onOpenConnectModal();
@@ -66,8 +66,8 @@ const Hero = ({ onOpenConnectModal, start }: HeroProps) => {
           src="/hero-figure.webp"
           alt=""
           className="hero-image"
-          width={810}
-          height={1080}
+          width={856}
+          height={768}
           fetchPriority="high"
           decoding="async"
           draggable={false}
@@ -83,7 +83,7 @@ const Hero = ({ onOpenConnectModal, start }: HeroProps) => {
           className="hero-content"
         >
           {/* Pretitle — Japanese particle */}
-          <motion.p variants={itemVariants} className="hero-pretitle silver-glow-text">
+          <motion.p variants={itemVariants} className="hero-pretitle silver-glow-text" lang="ja">
             私は
           </motion.p>
 

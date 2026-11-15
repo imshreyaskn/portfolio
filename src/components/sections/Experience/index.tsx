@@ -1,5 +1,5 @@
 // index.tsx — Experience section: scroll-driven animation, moon selection, details panel
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { EXPERIENCES } from './data';
 import MoonSVG, { MoonGradientDefs } from './MoonSVG';
@@ -103,6 +103,19 @@ const Experience = () => {
     setSelectedMoon(null);
   }, []);
 
+  // Focus follows the panel: into it on open, back to the moon on close.
+  const closeBtnRef = useRef<HTMLButtonElement>(null);
+  const returnFocusRef = useRef<HTMLElement | null>(null);
+  useEffect(() => {
+    if (selectedMoon !== null) {
+      if (!returnFocusRef.current) returnFocusRef.current = document.activeElement as HTMLElement | null;
+      const t = setTimeout(() => closeBtnRef.current?.focus({ preventScroll: true }), 300);
+      return () => clearTimeout(t);
+    }
+    returnFocusRef.current?.focus?.({ preventScroll: true });
+    returnFocusRef.current = null;
+  }, [selectedMoon]);
+
   /* ── Derived state ── */
 
   const selectedExperience = selectedMoon !== null ? EXPERIENCES[selectedMoon] : null;
@@ -119,8 +132,15 @@ const Experience = () => {
       <section
         id="experience"
         className="experience-section"
-        aria-label="Work experience"
+        aria-labelledby="experience-heading"
+        onKeyDown={(e) => {
+          if (e.key === 'Escape' && selectedMoon !== null) {
+            e.stopPropagation();
+            handleClosePanel();
+          }
+        }}
       >
+        <h2 id="experience-heading" className="sr-only">work experience</h2>
         {/* Moon cluster + spaceship — shifts when panel opens */}
         <motion.div
           className="experience-shift-wrapper"
@@ -228,6 +248,7 @@ const Experience = () => {
               {/* Panel header */}
               <div className="panel-floating-header">
                 <button
+                  ref={closeBtnRef}
                   type="button"
                   className="panel-close-btn"
                   onClick={handleClosePanel}

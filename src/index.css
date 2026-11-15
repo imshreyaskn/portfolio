@@ -88,6 +88,85 @@
   --sp-9:  96px;
   --sp-10: 128px;
   --sp-11: 160px;
+
+  /* ─── MOTION ──────────────────────────────────────────── */
+  /* One easing family for the whole site. Pair with the matching
+     EASE_* constants in src/lib/motion.ts for framer-motion. */
+  --ease-out:     cubic-bezier(0.16, 1, 0.3, 1);   /* entrances, reveals */
+  --ease-in-out:  cubic-bezier(0.65, 0, 0.35, 1);  /* state swaps, loops */
+  --ease-in:      cubic-bezier(0.7, 0, 0.84, 0);   /* exits */
+  --dur-instant:  120ms;   /* press feedback */
+  --dur-fast:     200ms;   /* hover, focus */
+  --dur-base:     350ms;   /* small state changes */
+  --dur-slow:     600ms;   /* panels, modals */
+  --dur-reveal:   1000ms;  /* section entrances */
+
+  /* ─── LAYERS ──────────────────────────────────────────── */
+  --z-base:       1;
+  --z-raised:     10;
+  --z-nav:        50;
+  --z-tooltip:    90;
+  --z-modal:      9000;
+  --z-loader:     9500;
+  --z-blocker:    9600;
+  --z-cursor:     99999;
+
+  /* ─── FOCUS ───────────────────────────────────────────── */
+  --focus-ring:   0 0 0 1px var(--bg-void), 0 0 0 3px rgba(255, 255, 255, 0.85);
+}
+
+/* Keyboard focus: a clear ring only when navigating by keyboard. */
+:focus-visible {
+  outline: 2px solid rgba(255, 255, 255, 0.85);
+  outline-offset: 3px;
+}
+:focus:not(:focus-visible) {
+  outline: none;
+}
+
+/* Skip link: hidden until focused with Tab. */
+.skip-link {
+  position: fixed;
+  top: 12px;
+  left: 12px;
+  z-index: var(--z-cursor);
+  padding: 10px 16px;
+  font-family: var(--ff-accent);
+  font-size: var(--fs-body-sm);
+  letter-spacing: 0.08em;
+  color: var(--bg-void);
+  background: var(--text-primary);
+  text-decoration: none;
+  transform: translateY(-200%);
+  transition: transform var(--dur-fast) var(--ease-out);
+}
+.skip-link:focus-visible {
+  transform: translateY(0);
+}
+
+/* Screen-reader-only content that stays in the accessibility tree. */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Reduced motion: honour the OS setting everywhere. JS loops check the
+   same media query via src/lib/motion.ts. */
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto !important; }
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
 
 * {
@@ -320,9 +399,54 @@ h3       { font-size: var(--fs-h3); letter-spacing: -0.01em; line-height: 1.25; 
   border-radius: 50%;
 }
 
+/* Fade the cursor and its trail out while the mouse is outside the window. */
+.liquid-cursor {
+  transition: opacity var(--dur-fast) var(--ease-out);
+}
+html.cursor-away .liquid-cursor,
+html.cursor-away .liquid-cursor-trail {
+  opacity: 0 !important;
+}
+
 
 
 html.is-locked,
 html.is-locked body {
   overflow: hidden;
 }
+
+/* ─── SECTION ERROR FALLBACK ────────────────────────────── */
+.section-error {
+  min-height: 60vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-3);
+  padding: var(--sp-7) var(--sp-5);
+  text-align: center;
+}
+.section-error__title {
+  font-family: var(--ff-display);
+  font-size: var(--fs-h3);
+  color: var(--text-primary);
+}
+.section-error__body {
+  font-family: var(--ff-accent);
+  font-size: var(--fs-body-sm);
+  color: var(--text-secondary);
+  max-width: 42ch;
+}
+.section-error__retry {
+  margin-top: var(--sp-3);
+  padding: 10px 22px;
+  font-family: var(--ff-accent);
+  font-size: var(--fs-body-sm);
+  letter-spacing: 0.08em;
+  color: var(--text-primary);
+  background: transparent;
+  border: 1px solid var(--line-accent);
+  transition: border-color var(--dur-fast) var(--ease-out), background-color var(--dur-fast) var(--ease-out), transform var(--dur-instant) var(--ease-out);
+}
+.section-error__retry:hover { border-color: var(--line-bright); background: rgba(255, 255, 255, 0.04); }
+.section-error__retry:active { transform: scale(0.97); }

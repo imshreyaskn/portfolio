@@ -96,6 +96,17 @@
   transform: scale(1.05);
 }
 
+.moon-image:active {
+  transform: scale(0.97);
+  transition-duration: var(--dur-instant), 0.8s;
+}
+
+/* The moon whose details are open stays lifted and lit. */
+.moon-image[aria-pressed="true"] {
+  transform: scale(1.08);
+  filter: drop-shadow(0 0 22px rgba(255, 255, 255, 0.45)) !important;
+}
+
 /* Focus: visible ring for keyboard, none for pointer */
 .moon-image:focus {
   outline: none;
@@ -177,6 +188,14 @@
 .experience-panel:hover::before,
 .experience-panel.active::before {
   animation: panelGradientSpin 4s linear infinite;
+}
+
+/* Registering the custom property lets the browser interpolate it;
+   without this the border gradient jumped instead of rotating. */
+@property --panel-angle {
+  syntax: '<angle>';
+  initial-value: 45deg;
+  inherits: false;
 }
 
 @keyframes panelGradientSpin {
@@ -274,6 +293,11 @@
   overscroll-behavior: contain;
   min-height: 0;
   padding-right: 8px;
+  /* Scrollbars are hidden site-wide, so fade the bottom edge to show there's
+     more to read; the padding lets the last line scroll clear of the fade. */
+  padding-bottom: 40px;
+  -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - 56px), transparent);
+  mask-image: linear-gradient(to bottom, #000 calc(100% - 56px), transparent);
 }
 
 .panel-meta {

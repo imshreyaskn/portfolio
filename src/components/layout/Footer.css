@@ -40,13 +40,6 @@
   max-width: 1200px;
 }
 
-.footer-brand {
-  font-family: 'Italiana', serif;
-  font-size: 2.5rem;
-  letter-spacing: 0.15em;
-  color: var(--text-primary);
-}
-
 .footer-links {
   display: flex;
   gap: 2.5rem;
@@ -61,17 +54,37 @@
   text-decoration: none;
   color: #C0C0C0;
   opacity: 0.85;
-  transition: all 0.3s ease;
+  transition: opacity var(--dur-fast) var(--ease-out), text-shadow var(--dur-base) var(--ease-out);
   cursor: pointer;
   /* Minimum 44px tap height without affecting layout */
   padding: 12px 8px;
   display: inline-flex;
   align-items: center;
+  position: relative;
 }
 
-.footer-text-link:hover {
+/* Hairline that draws in from the centre on hover/focus. */
+.footer-text-link::after {
+  content: '';
+  position: absolute;
+  left: 8px;
+  right: 8px;
+  bottom: 8px;
+  height: 1px;
+  background: currentColor;
+  transform: scaleX(0);
+  transition: transform var(--dur-base) var(--ease-out);
+}
+
+.footer-text-link:hover,
+.footer-text-link:focus-visible {
   opacity: 1;
   text-shadow: 0 0 12px rgba(255, 255, 255, 0.6);
+}
+
+.footer-text-link:hover::after,
+.footer-text-link:focus-visible::after {
+  transform: scaleX(1);
 }
 
 @media (max-width: 767px) {
@@ -98,14 +111,11 @@
   }
 }
 
+/* <button> styled like its <a> siblings: only strip the native chrome,
+   keep .footer-text-link's font, colour and padding. */
 .footer-mail-btn {
   background: none;
   border: none;
-  cursor: pointer;
-  padding: 0;
-  font-family: inherit;
-  font-size: inherit;
-  color: inherit;
 }
 
 

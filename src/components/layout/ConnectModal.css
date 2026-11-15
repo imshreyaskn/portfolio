@@ -1,7 +1,7 @@
 .connect-modal-overlay {
   position: fixed;
   inset: 0;
-  z-index: 9999;
+  z-index: var(--z-modal);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -44,11 +44,16 @@
   cursor: pointer;
   font-size: 2rem;
   line-height: 1;
-  transition: color 0.3s ease;
+  transition: color var(--dur-fast) var(--ease-out), transform var(--dur-base) var(--ease-out);
 }
 
 .connect-modal-close:hover {
   color: #fff;
+  transform: rotate(90deg);
+}
+
+.connect-modal-close:active {
+  transform: rotate(90deg) scale(0.9);
 }
 
 .connect-modal-title {
@@ -65,12 +70,12 @@
   flex-direction: column;
 }
 
-.connect-form-group label {
+.connect-label {
   font-family: 'Jost', sans-serif;
   font-size: 0.75rem;
   text-transform: uppercase;
   letter-spacing: 0.1em;
-  color: rgba(255, 255, 255, 0.5);
+  color: rgba(255, 255, 255, 0.62);
   margin-bottom: 0.5rem;
 }
 
@@ -82,9 +87,13 @@
   color: #fff;
   font-family: 'Jost', sans-serif;
   font-size: 1rem;
-  transition: all 0.3s ease;
+  transition: border-color var(--dur-fast) var(--ease-out), background-color var(--dur-fast) var(--ease-out), box-shadow var(--dur-fast) var(--ease-out);
   width: 100%;
   box-sizing: border-box;
+}
+
+.connect-input:hover:not(:disabled), .connect-textarea:hover:not(:disabled) {
+  border-color: rgba(255, 255, 255, 0.22);
 }
 
 .connect-input:focus, .connect-textarea:focus {
@@ -94,9 +103,36 @@
   box-shadow: 0 0 15px rgba(255, 255, 255, 0.05);
 }
 
-.connect-input:disabled {
-  color: rgba(255, 255, 255, 0.4);
-  cursor: not-allowed;
+.connect-input[aria-invalid="true"], .connect-textarea[aria-invalid="true"] {
+  border-color: rgba(255, 120, 120, 0.7);
+}
+
+.connect-input:disabled, .connect-textarea:disabled {
+  opacity: 0.6;
+}
+
+.connect-recipient {
+  font-family: var(--ff-accent);
+  font-size: 1rem;
+  color: rgba(255, 255, 255, 0.72);
+  text-decoration: none;
+  padding: 0.25rem 0;
+  align-self: flex-start;
+  background: linear-gradient(currentColor, currentColor) 0 100% / 0 1px no-repeat;
+  transition: color var(--dur-fast) var(--ease-out), background-size var(--dur-base) var(--ease-out);
+}
+
+.connect-recipient:hover {
+  color: #fff;
+  background-size: 100% 1px;
+}
+
+.connect-honeypot {
+  position: absolute;
+  left: -9999px;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
 }
 
 .connect-textarea {
@@ -123,10 +159,15 @@
   letter-spacing: 0.1em;
   font-size: 0.85rem;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: background-color var(--dur-fast) var(--ease-out), border-color var(--dur-fast) var(--ease-out), color var(--dur-fast) var(--ease-out), box-shadow var(--dur-base) var(--ease-out), transform var(--dur-instant) var(--ease-out);
   display: flex;
   align-items: center;
   justify-content: center;
+  gap: 0.6rem;
+}
+
+.connect-btn:active:not(:disabled) {
+  transform: scale(0.98);
 }
 
 .connect-btn:hover {
@@ -154,21 +195,48 @@
 }
 
 .connect-error-msg {
-  color: #ff4444;
+  color: #ff8a8a;
+  font-family: var(--ff-accent);
   font-size: 13px;
-  margin-top: -10px;
-  margin-bottom: 15px;
+  line-height: 1.5;
+  margin-top: -6px;
+  margin-bottom: 0;
 }
 
 .connect-btn.submitting {
-  opacity: 0.7;
-  cursor: not-allowed;
+  opacity: 0.8;
+  cursor: progress;
+}
+
+.connect-spinner {
+  width: 14px;
+  height: 14px;
+  border: 1.5px solid currentColor;
+  border-right-color: transparent;
+  border-radius: 50%;
+  animation: connect-spin 0.7s linear infinite;
+}
+
+@keyframes connect-spin {
+  to { transform: rotate(360deg); }
+}
+
+.connect-check {
+  width: 12px;
+  height: 7px;
+  border-left: 1.5px solid currentColor;
+  border-bottom: 1.5px solid currentColor;
+  transform: translateY(-2px) rotate(-45deg);
+  animation: connect-check-in var(--dur-base) var(--ease-out) both;
+}
+
+@keyframes connect-check-in {
+  from { opacity: 0; transform: translateY(-2px) rotate(-45deg) scale(0.4); }
 }
 
 .connect-btn.success {
-  opacity: 0.7;
-  cursor: not-allowed;
-  background-color: rgba(76, 175, 80, 0.2);
-  border-color: rgba(76, 175, 80, 0.5);
-  color: #4caf50;
+  cursor: default;
+  background-color: rgba(74, 222, 128, 0.14);
+  box-shadow: inset 0 0 0 1px rgba(74, 222, 128, 0.5);
+  color: var(--success);
 }

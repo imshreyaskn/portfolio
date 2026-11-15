@@ -56,11 +56,10 @@
 
 .orb-hit-area.collapsed {
   cursor: default;
-  /* Hide from BOTH pointer and keyboard when collapsed — no invisible
-     focus targets. Keyboard users re-expand via the container's
-     focus-capture handler (see TSX). */
+  /* Collapsed orbs ignore the pointer but stay in the Tab order: focusing
+     one triggers the container's focus-capture handler, which expands the
+     nav. (visibility:hidden made the nav unreachable by keyboard.) */
   pointer-events: none;
-  visibility: hidden;
 }
 
 /* Keyboard focus ring — only visible via :focus-visible, so the 1080p
@@ -71,7 +70,6 @@
 .orb-hit-area:focus-visible {
   outline: 1px solid rgba(255, 255, 255, 0.6);
   outline-offset: 2px;
-  visibility: visible;
 }
 
 @keyframes orb-idle-pulse {
@@ -89,7 +87,7 @@
   position: absolute;
   top: -2px;
   left: -2px;
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  transition: transform var(--dur-base) var(--ease-out), box-shadow var(--dur-base) var(--ease-out);
   pointer-events: none;
   animation: orb-idle-pulse 2.5s infinite ease-in-out;
 }
@@ -176,26 +174,27 @@
   }
 }
 
-/* Respect reduced motion: freeze the idle pulse; the RAF orbit is
-   time-based and subtle, but we still honor the preference. */
+/* Reduced motion is handled globally in index.css. */
 
-
+/* The orb for the section you're in: larger and brighter than the idle
+   orbs, with a slow breathing glow, so "you are here" reads at a glance. */
 .orb-glow-dot.active-memory {
+  transform: scale(1.6);
   box-shadow:
-    0 0 6px rgba(255, 255, 255, 0.5),
-    0 0 12px rgba(107, 156, 255, 0.25);
-  animation: orb-memory-pulse 3s ease-in-out infinite;
+    0 0 10px rgba(255, 255, 255, 1),
+    0 0 26px rgba(107, 156, 255, 0.85);
+  animation: orb-memory-pulse 3s var(--ease-in-out) infinite;
 }
 
 @keyframes orb-memory-pulse {
   0%, 100% {
     box-shadow:
-      0 0 6px rgba(255, 255, 255, 0.5),
-      0 0 12px rgba(107, 156, 255, 0.25);
+      0 0 10px rgba(255, 255, 255, 1),
+      0 0 26px rgba(107, 156, 255, 0.85);
   }
   50% {
     box-shadow:
-      0 0 8px rgba(255, 255, 255, 0.7),
-      0 0 18px rgba(107, 156, 255, 0.4);
+      0 0 14px rgba(255, 255, 255, 1),
+      0 0 38px rgba(107, 156, 255, 1);
   }
 }

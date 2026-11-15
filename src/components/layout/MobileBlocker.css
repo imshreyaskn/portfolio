@@ -2,7 +2,7 @@
   position: fixed;
   inset: 0;
   background-color: var(--bg-void, #000000);
-  z-index: 9999;
+  z-index: var(--z-blocker);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -19,8 +19,7 @@
   padding: 2.5rem;
   background: rgba(255, 255, 255, 0.03);
   border: 1px solid rgba(255, 255, 255, 0.05);
-  border-radius: 8px;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
 }
@@ -41,6 +40,29 @@
 
 .mobile-blocker-sub {
   font-size: 0.9rem;
-  color: var(--text-secondary, #7A7A8C);
+  color: var(--text-secondary, var(--text-secondary));
   margin: 0;
+}
+
+.mobile-blocker-links {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.5rem 1.25rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.mobile-blocker-links a {
+  font-family: 'Jost', sans-serif;
+  font-size: 0.95rem;
+  letter-spacing: 0.12em;
+  color: #C0C0C0;
+  text-decoration: none;
+  padding: 12px 4px; /* 44px+ touch target */
+  transition: color var(--dur-fast) var(--ease-out);
+}
+
+.mobile-blocker-links a:active {
+  color: #fff;
 }

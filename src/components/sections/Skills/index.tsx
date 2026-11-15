@@ -2,10 +2,13 @@ import { useState, useCallback, useEffect, useRef, useMemo, memo } from 'react';
 import { Canvas } from '@react-three/fiber';
 import { OrbitControls, PerspectiveCamera } from '@react-three/drei';
 import { motion, AnimatePresence, useInView } from 'framer-motion';
+import { EASE_OUT } from '../../../lib/motion';
 import { SKILLS_DATA, SkillItem } from './data';
 import ParticleSphere from './ParticleSphere';
 import { useIsMobile } from '../../../hooks/useIsMobile';
 import './Skills.css';
+import { useWarmup } from '../../../hooks/useWarmup';
+import RenderGate from '../../RenderGate';
 
 const ConstellationGraph = memo(function ConstellationGraph({ skills, isMobile, active }: { skills: SkillItem[]; isMobile: boolean; active: boolean }) {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -90,12 +93,44 @@ const Skills = () => {
   const viewRef = useRef<HTMLDivElement>(null);
   const sectionRef = useRef<HTMLElement>(null);
   const inView = useInView(sectionRef);
+  const nearView = useInView(sectionRef, { margin: '200px 0px' });
+  const warm = useWarmup();
+  const drawRef = useRef(true);
+  useEffect(() => {
+    drawRef.current = warm || nearView;
+  }, [warm, nearView]);
   const isPaused = !inView || (isMobile && selectedIndex !== null);
 
   const handleSelect = useCallback((index: number) => {
     setSelectedIndex((prev) => (prev === index ? null : index));
   }, []);
   const closeDetails = useCallback(() => setSelectedIndex(null), []);
+
+  const backButtonRef = useRef<HTMLButtonElement>(null);
+  const categoryButtonRefs = useRef<(HTMLButtonElement | null)[]>([]);
+  const lastOpenedFromKeyboard = useRef<number | null>(null);
+  const gradientSvgRef = useRef<SVGSVGElement>(null);
+
+  // Opening from the keyboard chips moves focus into the pane; closing puts
+  // it back on the chip, so keyboard users never lose their place.
+  useEffect(() => {
+    if (selectedIndex !== null && lastOpenedFromKeyboard.current !== null) {
+      const t = setTimeout(() => backButtonRef.current?.focus({ preventScroll: true }), 350);
+      return () => clearTimeout(t);
+    }
+    if (selectedIndex === null && lastOpenedFromKeyboard.current !== null) {
+      categoryButtonRefs.current[lastOpenedFromKeyboard.current]?.focus({ preventScroll: true });
+      lastOpenedFromKeyboard.current = null;
+    }
+  }, [selectedIndex]);
+
+  // The SMIL gradient behind the skill icons loops forever; freeze it offscreen.
+  useEffect(() => {
+    const svg = gradientSvgRef.current;
+    if (!svg) return;
+    if (inView) svg.unpauseAnimations();
+    else svg.pauseAnimations();
+  }, [inView]);
 
   const isRightSide = selectedIndex !== null ? SKILLS_DATA[selectedIndex].side === 'right' : false;
   const canvasShift = selectedIndex === null ? '0vw'
@@ -113,6 +148,7 @@ const Skills = () => {
           style={{ width: '100%', height: '100%' }}
         >
           <PerspectiveCamera makeDefault position={[0, 0, 5.5]} fov={45} />
+          <RenderGate activeRef={drawRef} />
           {selectedIndex === null && !isMobile && (
             <OrbitControls enableZoom={false} enablePan={false} enableDamping dampingFactor={0.05} rotateSpeed={0.5} />
           )}
@@ -132,8 +168,39 @@ const Skills = () => {
   );
 
   return (
-    <section id="skills" className="skills-section" ref={sectionRef}>
-      <svg width="0" height="0" style={{ position: 'absolute' }}>
+    <section
+      id="skills"
+      className="skills-section"
+      ref={sectionRef}
+      aria-labelledby="skills-heading"
+      onKeyDown={(e) => {
+        if (e.key === 'Escape' && selectedIndex !== null) {
+          e.stopPropagation();
+          closeDetails();
+        }
+      }}
+    >
+      <h2 id="skills-heading" className="sr-only">skills</h2>
+
+      {/* Keyboard / screen-reader route into the sphere: hidden until a
+          button inside receives focus, then shown as a row of chips. */}
+      <ul className="skills-kbd-nav" aria-label="Skill categories">
+        {SKILLS_DATA.map((cat, i) => (
+          <li key={cat.category}>
+            <button
+              type="button"
+              ref={(el) => { categoryButtonRefs.current[i] = el; }}
+              className="skills-kbd-chip"
+              aria-pressed={selectedIndex === i}
+              onClick={() => { lastOpenedFromKeyboard.current = i; handleSelect(i); }}
+            >
+              {cat.category.toLowerCase()}
+            </button>
+          </li>
+        ))}
+      </ul>
+
+      <svg ref={gradientSvgRef} width="0" height="0" style={{ position: 'absolute' }} aria-hidden="true">
         <defs>
           <linearGradient id="animatedPremiumGrad" x1="0%" y1="0%" x2="100%" y2="100%">
             <stop offset="0%" stopColor="#ffffff"><animate attributeName="stop-color" values="#ffffff;#7A7A8C;#ffffff" dur="4s" repeatCount="indefinite" /></stop>
@@ -156,7 +223,7 @@ const Skills = () => {
             style={{ left: paneLeft }}
           >
             <div className="skills-details-header">
-              <motion.button onClick={closeDetails} className="framer-button skills-back-button" aria-label="Back to skills overview">
+              <motion.button ref={backButtonRef} onClick={closeDetails} className="framer-button skills-back-button" aria-label="Back to skills overview">
                 ← back to matrix
               </motion.button>
             </div>
@@ -164,7 +231,7 @@ const Skills = () => {
               <motion.div key={selectedIndex} initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -15 }} transition={{ duration: 0.2 }}>
                 <div className="skills-hybrid-layout">
                   <div className="skills-editorial-header">
-                    <h2 className="skills-editorial-title silver-glow-text">{SKILLS_DATA[selectedIndex].category.toUpperCase()}</h2>
+                    <h3 className="skills-editorial-title silver-glow-text">{SKILLS_DATA[selectedIndex].category.toUpperCase()}</h3>
                     {SKILLS_DATA[selectedIndex].desc && <p className="skills-editorial-desc">{SKILLS_DATA[selectedIndex].desc}</p>}
                   </div>
                   <ConstellationGraph skills={SKILLS_DATA[selectedIndex].skills} isMobile={isMobile} active={inView} />
@@ -175,7 +242,14 @@ const Skills = () => {
         )}
       </AnimatePresence>
 
-      <motion.div animate={{ x: canvasShift }} transition={{ type: 'spring', damping: 25, stiffness: 120 }} className="skills-canvas-wrapper">
+      <motion.div
+        className="skills-canvas-wrapper"
+        initial={{ opacity: 0, scale: 0.94 }}
+        whileInView={{ opacity: 1, scale: 1, transition: { duration: 1.4, ease: EASE_OUT } }}
+        viewport={{ once: true, amount: 0.35 }}
+        animate={{ x: canvasShift }}
+        transition={{ type: 'spring', damping: 25, stiffness: 120 }}
+      >
         {canvasElement}
       </motion.div>
     </section>

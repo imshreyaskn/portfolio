@@ -21,22 +21,6 @@ const LoadingScreen = ({ onReveal, onDone }: LoadingScreenProps) => {
     controls.start('visible');
   }, [controls]);
 
-  // Throttle progress text updates to ~10fps instead of 60fps
-  // This prevents LoadingScreen from re-rendering every frame
-  const progressRef = useRef(progress);
-  useEffect(() => {
-    progressRef.current = progress;
-  }, [progress]);
-
-  useEffect(() => {
-    if (!showProgress) return;
-    const interval = setInterval(() => {
-      // Force a re-render only for the text, not the whole component
-      setShowProgress((prev) => prev); // no-op, but we read progressRef in render
-    }, 100);
-    return () => clearInterval(interval);
-  }, [showProgress]);
-
   // Watch for the readiness gate to pass
   useEffect(() => {
     if (!ready || isImploding) return;
@@ -54,7 +38,6 @@ const LoadingScreen = ({ onReveal, onDone }: LoadingScreenProps) => {
       await new Promise((r) => setTimeout(r, 50));
 
       // 3. Start the implosion
-      window.dispatchEvent(new CustomEvent('implosion-start'));
       const implodePromise = controls.start('implode');
 
       // 4. Fire onReveal at 80% through the implosion (not at the start)
@@ -79,7 +62,8 @@ const LoadingScreen = ({ onReveal, onDone }: LoadingScreenProps) => {
     finishSequence();
   }, [ready, isImploding, controls, onReveal, onDone]);
 
-  const displayProgress = Math.round(progressRef.current * 100);
+  // useReadiness already throttles progress updates to ~10fps.
+  const displayProgress = Math.round(progress * 100);
 
   return (
     <motion.div

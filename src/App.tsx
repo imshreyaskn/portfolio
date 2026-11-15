@@ -1,4 +1,5 @@
 import { useState, useEffect, lazy, Suspense, useCallback } from 'react';
+import { MotionConfig } from 'framer-motion';
 import CustomCursor from './components/CustomCursor';
 import StarMapBackground from './components/StarMapBackground';
 import Hero from './components/sections/Hero';
@@ -55,7 +56,11 @@ function App() {
   }
 
   return (
-    <>
+    // reducedMotion="user": framer-motion skips transform/layout animations
+    // when the OS asks for reduced motion.
+    <MotionConfig reducedMotion="user">
+      <a href="#main" className="skip-link">skip to content</a>
+
       {!preloaderGone && (
         <LoadingScreen
           onReveal={() => setRevealed(true)}
@@ -67,12 +72,22 @@ function App() {
       <StarMapBackground />
       <OrbNavbar />
 
-      <main className="main-content" aria-busy={!revealed}>
+      <main id="main" className="main-content" aria-busy={!revealed} tabIndex={-1}>
         <Hero start={revealed} onOpenConnectModal={openConnectModal} />
-        <ErrorBoundary>
+        {/* One boundary per section: if WebGL or a lazy chunk fails in one,
+            the others keep working. */}
+        <ErrorBoundary label="skills">
           <Suspense fallback={<SectionLoader />}>
             <Skills />
+          </Suspense>
+        </ErrorBoundary>
+        <ErrorBoundary label="work">
+          <Suspense fallback={<SectionLoader />}>
             <Experience />
+          </Suspense>
+        </ErrorBoundary>
+        <ErrorBoundary label="projects">
+          <Suspense fallback={<SectionLoader />}>
             <Projects />
           </Suspense>
         </ErrorBoundary>
@@ -81,7 +96,7 @@ function App() {
       <Footer onOpenConnectModal={openConnectModal} />
 
       <ConnectModal isOpen={isConnectModalOpen} onClose={closeConnectModal} />
-    </>
+    </MotionConfig>
   );
 }
 
